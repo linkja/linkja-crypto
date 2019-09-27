@@ -1,3 +1,7 @@
+.DS_Store
+out/
+*.class
+
 # Prerequisites
 *.d
 
