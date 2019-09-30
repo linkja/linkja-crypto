@@ -24,6 +24,8 @@ endif()
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${JNI_INCLUDE_DIRS})
+include_directories("./src/openssl/include")
+include_directories("./src/openssl")
 
 # try to extract the version from the VERSION file
 FILE(READ ${CMAKE_CURRENT_SOURCE_DIR}/VERSION VERSION)
