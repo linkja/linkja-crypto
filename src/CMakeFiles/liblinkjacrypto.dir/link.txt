@@ -1,0 +1,1 @@
+/Library/Developer/CommandLineTools/usr/bin/cc  -dynamiclib -Wl,-headerpad_max_install_names  -o libliblinkjacrypto.dylib -install_name @rpath/libliblinkjacrypto.dylib CMakeFiles/liblinkjacrypto.dir/linkja-crypto.c.o 
