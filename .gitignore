@@ -3,6 +3,7 @@ out/
 *.class
 
 .deps
+.libs
 .dirstamp
 
 # Don't include any archive we make
