@@ -7,7 +7,7 @@ SET(SECRET_LEN 16)
 
 # Start writing out the header file that will contain our secret value.
 file(WRITE include/linkja_secret.h "#ifndef LINKJA_SECRET_H\n#define LINKJA_SECRET_H\n")
-file(APPEND include/linkja_secret.h "const char LINKJA_SECRET[] = {")
+file(APPEND include/linkja_secret.h "const char LINKJA_SECRET[${SECRET_LEN}] = {")
 
 # Use openssl to generate random hex digits and use those to populate the secret
 # value in the header file
