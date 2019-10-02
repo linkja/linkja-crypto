@@ -2,6 +2,10 @@
 out/
 *.class
 
+# This is the secret header file that makes the magic happen.  We don't want
+# this to get saved, because it is regenerated each time.
+src/include/linkja_secret.h
+
 .deps
 .libs
 .dirstamp

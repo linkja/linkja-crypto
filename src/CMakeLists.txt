@@ -2,6 +2,20 @@
 #
 cmake_minimum_required (VERSION 3.8)
 
+# Generate our secret value within a header file.
+file(WRITE include/linkja_secret.h "#ifndef LINKJA_SECRET_H\n#define LINKJA_SECRET_H\n")
+file(APPEND include/linkja_secret.h "const char LINKJA_SECRET[] = {")
+foreach(gen_loop RANGE 1 15)
+  execute_process(COMMAND openssl rand -hex 1 OUTPUT_VARIABLE RANDOM_VALUE)
+  string(REGEX REPLACE "\n$" "" RANDOM_VALUE "${RANDOM_VALUE}")
+  file(APPEND include/linkja_secret.h "0x${RANDOM_VALUE},")
+endforeach(gen_loop)
+
+execute_process(COMMAND openssl rand -hex 1 OUTPUT_VARIABLE RANDOM_VALUE)
+string(REGEX REPLACE "\n$" "" RANDOM_VALUE "${RANDOM_VALUE}")
+file(APPEND include/linkja_secret.h "0x${RANDOM_VALUE}")
+file(APPEND include/linkja_secret.h "};\n#endif")
+
 add_library(openssl STATIC IMPORTED) # or STATIC instead of SHARED
 set_target_properties(openssl PROPERTIES
   IMPORTED_LOCATION "${CMAKE_SOURCE_DIR}/lib/openssl/macos/libcrypto.a"
