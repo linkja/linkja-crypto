@@ -2,11 +2,28 @@
 out/
 *.class
 
+# This is the secret header file that makes the magic happen.  We don't want
+# this to get saved, because it is regenerated each time.
+src/include/linkja_secret.h
+
 .deps
+.libs
 .dirstamp
 
 # Don't include any archive we make
 linkja*.gz
+
+CMakeLists.txt.user
+CMakeCache.txt
+CMakeFiles
+CMakeScripts
+Testing
+Makefile
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
+_deps
 
 # Prerequisites
 *.d
@@ -107,8 +124,8 @@ m4/ltsugar.m4
 m4/ltversion.m4
 m4/lt~obsolete.m4
 
-# Generated Makefile 
-# (meta build system like autotools, 
+# Generated Makefile
+# (meta build system like autotools,
 # can automatically generate from config.status script
 # (which is called by configure script))
 Makefile

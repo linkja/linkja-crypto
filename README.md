@@ -12,6 +12,11 @@ From the root directory, run the build script:
 ./build.sh
 ```
 
+The build process performs several steps, managed in part by [CMake](https://cmake.org):
+1. Generate the JNI header file for our library.
+  `$JAVA_HOME/bin/javac -h ./src/include ./src/java/Library.java`
+2. Generate the project secret, which is used to add more entropy to our encryption routines.  This is done via [???].
+
 ## Testing
 To ensure everything is set up correctly, you can compile and run a simple
 test program using the testing script:
