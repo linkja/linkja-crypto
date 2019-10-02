@@ -5,21 +5,37 @@ headers with the C code.
 
 **WORK IN PROGRESS** - This is under active development
 
-## Compiling
-From the root directory, run the build script:
+## Dependencies
 
-```
-./build.sh
-```
+Setup and building of the linkja-crypto library requires the following:
+1. [CMake](https://cmake.org) (3.8 or higher)
+2. Java (1.8 or higher; [OpenJDK](https://openjdk.java.net/) is allowed)
+  1. Requires the JDK to be installed
+  2. Will use javac and java binaries
+  3. Requires Java Native Interface (JNI), which comes with most JDKs
+3. [OpenSSL](https://www.openssl.org/) - the openssl binary needs to be in your path for the build scripts to work.  You can test this by executing "openssl version" at the command line.
+4. Make system and C compiler
+  1. For macOS, gcc and make can be used.
+  2. For Windows, Visual Studio 2019 Community edition can be used.
 
-The build process performs several steps, managed in part by [CMake](https://cmake.org):
-1. Generate the JNI header file for our library.
-  `$JAVA_HOME/bin/javac -h ./src/include ./src/java/Library.java`
-2. Generate the project secret, which is used to add more entropy to our encryption routines.  This is done via [???].
+## Building
+
+There are multiple components that go into building the linkja-crypto library.  For macOS, these are wrapped up into the `build.sh` script (available from the root directory).
+
+1. Create the JNI header file
+  >`$JAVA_HOME/bin/javac -h ./src/include ./src/java/Library.java`
+
+2. Ensure cmake targets are built and/or updated
+  > `cmake .`
+
+3. Build the library
+  > ```
+  make clean
+  make
+  ```
 
 ## Testing
-To ensure everything is set up correctly, you can compile and run a simple
-test program using the testing script:
+To ensure everything is set up correctly, you can compile and run a simple test program using the testing script:
 
 ```
 ./test.sh
