@@ -9,10 +9,10 @@ extern "C" {
 #endif
 /*
  * Class:     linkja_crypto_Library
- * Method:    test
- * Signature: ()V
+ * Method:    getLibrarySignature
+ * Signature: ()Ljava/lang/String;
  */
-JNIEXPORT void JNICALL Java_linkja_crypto_Library_test
+JNIEXPORT jstring JNICALL Java_linkja_crypto_Library_getLibrarySignature
   (JNIEnv *, jclass);
 
 #ifdef __cplusplus

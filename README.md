@@ -29,7 +29,6 @@ There are multiple components that go into building the linkja-crypto library.  
   > `cmake .`
 
 3. Build the library
-  > 
   ```
   make clean
   make

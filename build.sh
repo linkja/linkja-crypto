@@ -10,7 +10,7 @@ rm -rf out/
 $JAVA_HOME/bin/javac -h ./src/include ./src/java/Library.java
 
 # Ensure cmake targets are updated
-cmake .
+cmake . -DCMAKE_BUILD_TYPE=Release
 
 make clean
 make

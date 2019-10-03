@@ -5,11 +5,9 @@
 
 #include <openssl/rsa.h>
 
-JNIEXPORT void JNICALL Java_linkja_crypto_Library_test
-  (JNIEnv* env, jobject thisObject) {
-    printf("linkja-crypto test method\r\n");
-    printf("%lu\r\n", sizeof(LINKJA_SECRET));
+JNIEXPORT jstring JNICALL Java_linkja_crypto_Library_getLibrarySignature
+   (JNIEnv *env, jobject obj) {
+ (void)obj;  // Avoid warning about unused parameters.
 
-    RSA_free(NULL);
-    //AES_set_encrypt_key(NULL, NULL, NULL);
+ return (*env)->NewStringUTF(env, LINKJA_SECRET_HASH);
 }

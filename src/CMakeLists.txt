@@ -3,16 +3,22 @@
 cmake_minimum_required (VERSION 3.8)
 
 # Define how many bytes should be in the secret value
-SET(SECRET_LEN 16)
+SET(SECRET_LEN 32)
 
 # Start writing out the header file that will contain our secret value.
-file(WRITE include/linkja_secret.h "#ifndef LINKJA_SECRET_H\n#define LINKJA_SECRET_H\n")
-file(APPEND include/linkja_secret.h "const char LINKJA_SECRET[${SECRET_LEN}] = {")
+file(WRITE include/linkja_secret.h "// This is an automatically generated file\n\n#ifndef LINKJA_SECRET_H\n#define LINKJA_SECRET_H\n\n")
+file(APPEND include/linkja_secret.h "#define LINKJA_SECRET_LEN ${SECRET_LEN}\n#define LINKJA_SECRET {")
 
 # Use openssl to generate random hex digits and use those to populate the secret
 # value in the header file
 execute_process(COMMAND openssl rand -hex ${SECRET_LEN} OUTPUT_VARIABLE RANDOM_VALUE)
-string(REGEX REPLACE "\n$" "" RANDOM_VALUE "${RANDOM_VALUE}")
+file(WRITE ../tmp/openssl.tmp "${RANDOM_VALUE}")
+# Note that the process executes in the context of the top-level directory, so we
+# access the file under tmp/ instead of ../tmp/
+execute_process(COMMAND openssl dgst -sha256 tmp/openssl.tmp OUTPUT_VARIABLE RANDOM_VALUE_HASH)
+string(REGEX REPLACE "SHA256.*= " "" RANDOM_VALUE_HASH "${RANDOM_VALUE_HASH}")
+string(REGEX REPLACE "\n$" "" RANDOM_VALUE_HASH "${RANDOM_VALUE_HASH}")
+file(REMOVE ../tmp/openssl.tmp)
 foreach(gen_loop RANGE 1 ${SECRET_LEN})
   MATH(EXPR str_start "(${gen_loop}*2)-2")
   string(SUBSTRING "${RANDOM_VALUE}" ${str_start} 2 VALUE)
@@ -21,7 +27,7 @@ foreach(gen_loop RANGE 1 ${SECRET_LEN})
     file(APPEND include/linkja_secret.h ", ")
   ENDIF(NOT gen_loop EQUAL ${SECRET_LEN})
 endforeach(gen_loop)
-file(APPEND include/linkja_secret.h "};\n#endif")
+file(APPEND include/linkja_secret.h "}\n#define LINKJA_SECRET_HASH \"${RANDOM_VALUE_HASH}\" \n\n#endif\n")
 
 # Link in openssl
 add_library(openssl STATIC IMPORTED) # or STATIC instead of SHARED
@@ -32,6 +38,9 @@ set_target_properties(openssl PROPERTIES
 
 # Specify the .c file that creates our shared library
 add_library(linkjacrypto SHARED "linkja-crypto.c")
+
+# Add some additional compiler options for strict warning checks.
+target_compile_options(linkjacrypto PRIVATE -Wall -Wextra -Wpedantic -Werror)
 
 # Add the dependency to link to the openssl library
 target_link_libraries(linkjacrypto openssl)
