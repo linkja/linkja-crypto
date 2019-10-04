@@ -1,4 +1,4 @@
-package linkja.crypto;
+package org.linkja.crypto;
 
 public class Library {
     static {

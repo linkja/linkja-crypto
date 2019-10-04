@@ -1,4 +1,4 @@
-import linkja.crypto.Library;
+import org.linkja.crypto.Library;
 
 public class Test {
   // A very basic tester to call our test function call for linkja-crypto

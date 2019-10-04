@@ -31,4 +31,4 @@ unset(VERSION)
 # Include sub-projects.
 add_subdirectory ("src")
 
-add_jar(Library ./src/java/Library.java OUTPUT_DIR "${CMAKE_BINARY_DIR}/out")
+add_jar(linkja-crypto ./src/java/Library.java OUTPUT_DIR "${CMAKE_BINARY_DIR}/out")
