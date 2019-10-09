@@ -4,6 +4,9 @@ cmake_minimum_required (VERSION 3.8)
 
 # Define how many bytes should be in the secret value
 SET(SECRET_LEN 32)
+# Define how many characters of the secret value's hash we should display.
+# By showing less than the whole string, we are minimizing information disclosure.
+SET(SECRET_HASH_LEN 32)
 
 # Start writing out the header file that will contain our secret value.
 file(WRITE include/linkja_secret.h "// This is an automatically generated file\n\n#ifndef LINKJA_SECRET_H\n#define LINKJA_SECRET_H\n\n")
@@ -27,6 +30,8 @@ foreach(gen_loop RANGE 1 ${SECRET_LEN})
     file(APPEND include/linkja_secret.h ", ")
   ENDIF(NOT gen_loop EQUAL ${SECRET_LEN})
 endforeach(gen_loop)
+
+string(SUBSTRING "${RANDOM_VALUE_HASH}" 0 ${SECRET_HASH_LEN} RANDOM_VALUE_HASH)
 file(APPEND include/linkja_secret.h "}\n#define LINKJA_SECRET_HASH \"${RANDOM_VALUE_HASH}\" \n\n#endif\n")
 
 # Link in openssl
