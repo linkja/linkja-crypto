@@ -10,6 +10,8 @@ find_package(JNI REQUIRED)
 include(UseJava)
 message(STATUS "Using Java ${Java_VERSION_STRING}")
 message(STATUS "  - Java compiler ${Java_JAVAC_EXECUTABLE}")
+SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/build/modules")
+find_package(CMOCKA REQUIRED)
 
 project ("liblinkjacrypto")
 
@@ -28,7 +30,11 @@ endif()
 message(STATUS "Detected version: ${LC_VERSION}")
 unset(VERSION)
 
-# Include sub-projects.
+# Include our actual source.
 add_subdirectory ("src")
 
 add_jar(linkja-crypto ./src/java/Library.java OUTPUT_DIR "${CMAKE_BINARY_DIR}/out")
+
+# Include our C unit tests
+enable_testing()
+add_subdirectory(test/c)

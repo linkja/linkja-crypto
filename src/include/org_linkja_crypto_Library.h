@@ -9,6 +9,14 @@ extern "C" {
 #endif
 /*
  * Class:     org_linkja_crypto_Library
+ * Method:    hash
+ * Signature: (Ljava/lang/String;)Ljava/lang/String;
+ */
+JNIEXPORT jstring JNICALL Java_org_linkja_crypto_Library_hash
+  (JNIEnv *, jclass, jstring);
+
+/*
+ * Class:     org_linkja_crypto_Library
  * Method:    getLibrarySignature
  * Signature: ()Ljava/lang/String;
  */

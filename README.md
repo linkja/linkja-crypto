@@ -14,9 +14,11 @@ Setup and building of the linkja-crypto library requires the following:
     2. Will use javac and java binaries
     3. Requires Java Native Interface (JNI), which comes with most JDKs
 3. [OpenSSL](https://www.openssl.org/) - the openssl binary needs to be in your path for the build scripts to work.  You can test this by executing "openssl version" at the command line.
-4. Make system and C compiler
+4. C compiler and make system
     1. For macOS, gcc and make can be used.
     2. For Windows, Visual Studio 2019 Community edition can be used.
+5. [cmocka](https://cmocka.org/) for unit tests
+    1. For macOS, `brew install cmocka`
 
 ## Building
 
