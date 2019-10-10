@@ -6,6 +6,8 @@ out/
 # this to get saved, because it is regenerated each time.
 src/include/linkja_secret.h
 
+target/
+
 .deps
 .libs
 .dirstamp
