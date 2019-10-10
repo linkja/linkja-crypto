@@ -21,3 +21,14 @@ TARGET_LINK_LIBRARIES(test-linkja-crypto-hash ${LIBCMOCKA_LIBRARIES})
 # Install and register our test programs
 INSTALL(TARGETS test-linkja-crypto-hash RUNTIME DESTINATION out)
 add_test(test-linkja-crypto-hash ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/test-linkja-crypto-hash)
+
+
+# Link in openssl
+add_library(openssl STATIC IMPORTED) # or STATIC instead of SHARED
+set_target_properties(openssl PROPERTIES
+  IMPORTED_LOCATION "${CMAKE_SOURCE_DIR}/lib/openssl/macos/libcrypto.a"
+  INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/lib/openssl/include"
+)
+
+# Add the dependency to link to the openssl library
+target_link_libraries(test-linkja-crypto-hash openssl)

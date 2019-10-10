@@ -19,6 +19,9 @@ Setup and building of the linkja-crypto library requires the following:
     2. For Windows, Visual Studio 2019 Community edition can be used.
 5. [cmocka](https://cmocka.org/) for unit tests
     1. For macOS, `brew install cmocka`
+    2. For Windows, [download the latest source code](https://cmocka.org/files/1.1/)
+        1. Extract the .tar.xz to a folder
+        2. You can use Visual Studio to open the folder and build via CMakeList
 
 ## Building
 

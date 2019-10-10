@@ -5,5 +5,8 @@ public class Test {
   public static void main(String[] args) {
     Library library = new Library();
     System.out.printf("Library signature: %s\r\n", library.getLibrarySignature());
+
+    String input = "linkja";
+    System.out.printf("Hash '%s' = '%s'\r\n", input, library.hash(input));
   }
 }
