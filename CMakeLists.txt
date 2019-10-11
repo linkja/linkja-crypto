@@ -33,8 +33,6 @@ unset(VERSION)
 # Include our actual source.
 add_subdirectory ("src")
 
-add_jar(linkja-crypto ./src/java/Library.java OUTPUT_DIR "${CMAKE_BINARY_DIR}/out")
-
 # Include our C unit tests
 enable_testing()
-add_subdirectory(test/c)
+add_subdirectory(src/test/c)

@@ -8,7 +8,7 @@ SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/../build/modules
 SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/out)
 
 SET(SOURCES
-	../../src/linkja-crypto.c
+	../../linkja-crypto.c
 	test-linkja-crypto-hash.c
 )
 

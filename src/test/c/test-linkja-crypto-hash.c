@@ -4,7 +4,7 @@
 #include <setjmp.h>
 #include <cmocka.h>
 
-#include "../../src/linkja-crypto.h"
+#include "../../linkja-crypto.h"
 
 static void test_hash_string_null(void **state) {
 	char output[HASH_OUTPUT_BUFFER_LEN];

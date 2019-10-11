@@ -53,5 +53,5 @@ target_link_libraries(linkjacrypto openssl)
 # Specify the directory where we want our final library written
 set_target_properties(linkjacrypto
     PROPERTIES
-    LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/out"
+    LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/target"
 )
