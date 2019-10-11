@@ -17,6 +17,14 @@ JNIEXPORT jstring JNICALL Java_org_linkja_crypto_Library_hash
 
 /*
  * Class:     org_linkja_crypto_Library
+ * Method:    generateToken
+ * Signature: (I)Ljava/lang/String;
+ */
+JNIEXPORT jstring JNICALL Java_org_linkja_crypto_Library_generateToken
+  (JNIEnv *, jclass, jint);
+
+/*
+ * Class:     org_linkja_crypto_Library
  * Method:    getLibrarySignature
  * Signature: ()Ljava/lang/String;
  */

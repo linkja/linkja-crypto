@@ -11,16 +11,23 @@ SET(SOURCES
 	../../linkja-crypto.c
 	test-linkja-crypto-hash.c
 )
-
 ADD_EXECUTABLE(test-linkja-crypto-hash ${SOURCES})
+SET(SOURCES
+	../../linkja-crypto.c
+	test-linkja-crypto-token.c
+)
+ADD_EXECUTABLE(test-linkja-crypto-token ${SOURCES})
 
 FIND_PACKAGE(CMOCKA REQUIRED)
 INCLUDE_DIRECTORIES(${LIBCMOCKA_INCLUDE_DIR})
 TARGET_LINK_LIBRARIES(test-linkja-crypto-hash ${LIBCMOCKA_LIBRARIES})
+TARGET_LINK_LIBRARIES(test-linkja-crypto-token ${LIBCMOCKA_LIBRARIES})
 
 # Install and register our test programs
 INSTALL(TARGETS test-linkja-crypto-hash RUNTIME DESTINATION out)
 add_test(test-linkja-crypto-hash ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/test-linkja-crypto-hash)
+INSTALL(TARGETS test-linkja-crypto-token RUNTIME DESTINATION out)
+add_test(test-linkja-crypto-token ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/test-linkja-crypto-token)
 
 
 # Link in openssl
@@ -32,3 +39,4 @@ set_target_properties(openssl PROPERTIES
 
 # Add the dependency to link to the openssl library
 target_link_libraries(test-linkja-crypto-hash openssl)
+target_link_libraries(test-linkja-crypto-token openssl)
