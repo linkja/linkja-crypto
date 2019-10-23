@@ -17,6 +17,22 @@ JNIEXPORT jstring JNICALL Java_org_linkja_crypto_Library_hash
 
 /*
  * Class:     org_linkja_crypto_Library
+ * Method:    createSecureHash
+ * Signature: (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+ */
+JNIEXPORT jstring JNICALL Java_org_linkja_crypto_Library_createSecureHash
+  (JNIEnv *, jclass, jstring, jstring, jstring);
+
+/*
+ * Class:     org_linkja_crypto_Library
+ * Method:    revertSecureHash
+ * Signature: (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+ */
+JNIEXPORT jstring JNICALL Java_org_linkja_crypto_Library_revertSecureHash
+  (JNIEnv *, jclass, jstring, jstring, jstring);
+
+/*
+ * Class:     org_linkja_crypto_Library
  * Method:    generateToken
  * Signature: (I)Ljava/lang/String;
  */

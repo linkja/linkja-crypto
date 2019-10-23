@@ -1,5 +1,6 @@
 .DS_Store
 out/
+infer-out/
 *.class
 
 # This is the secret header file that makes the magic happen.  We don't want
