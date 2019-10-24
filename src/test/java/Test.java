@@ -1,4 +1,5 @@
 import org.linkja.crypto.Library;
+import java.util.Arrays;
 
 public class Test {
   // A very basic tester for linkja-crypto integration tests
@@ -14,6 +15,40 @@ public class Test {
     }
     else {
       System.out.printf("**ERROR : unexpected results from hash: %s\r\n", hash);
+    }
+
+    // GENERATETOKEN
+    final int TOKEN_LEN = 32;
+    String token1 = library.generateToken(TOKEN_LEN);
+    String token2 = library.generateToken(TOKEN_LEN);
+    if (token1 == null || token1.length() != TOKEN_LEN*2) { // Remember 2 chars for 1 byte in response
+      System.out.printf("**ERROR : generateToken did not return a %d character string for the first %d byte value\r\n", (TOKEN_LEN*2), TOKEN_LEN);
+    }
+    else if (token2 == null || token2.length() != TOKEN_LEN*2) { // Remember 2 chars for 1 byte in response
+      System.out.printf("**ERROR : generateToken did not return a %d character string for the second %d byte value\r\n", (TOKEN_LEN*2), TOKEN_LEN);
+    }
+    else if (token1.equals(token2)) {
+      System.out.println("**ERROR : generateToken returned the same key twice");
+    }
+    else {
+      System.out.println("OK - generateToken");
+    }
+
+    // GENERATEKEY
+    final int KEY_LEN = 64;
+    byte[] key1 = library.generateKey(KEY_LEN);
+    byte[] key2 = library.generateKey(KEY_LEN);
+    if (key1 == null || key1.length != KEY_LEN) {
+      System.out.printf("**ERROR : generateKey did not return a %d byte value for the first key\r\n", KEY_LEN);
+    }
+    else if (key2 == null || key2.length != KEY_LEN) {
+      System.out.printf("**ERROR : generateKey did not return a %d byte value for the second key\r\n", KEY_LEN);
+    }
+    else if (Arrays.equals(key1, key2)) {
+      System.out.println("**ERROR : generateKey returned the same key twice");
+    }
+    else {
+      System.out.println("OK - generateKey");
     }
 
     // CREATESECUREHASH

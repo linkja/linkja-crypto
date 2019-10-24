@@ -141,23 +141,56 @@ bool hash_data(const unsigned char *data, size_t data_len, unsigned char output[
   generate_token - generate a random array of 'length' bytes, and return a character
   array ('output') that contains the hexadecimal representation of the token.
 
+  Returns: true if successful, false otherwise
+
   The size of 'output' will be (2 * length) + 1 characters.
 
   e.g. input -> 16
        output -> "d71a16753a7a31d6780ce6318a764524"
 */
-void generate_token(unsigned int length, char output[])
+bool generate_token(unsigned int length, char output[])
 {
+  if (length < TOKEN_MIN_LEN || length > TOKEN_MAX_LEN) {
+    return false;
+  }
+
   unsigned int output_len = ((length * 2) + 1);
   memset(output, 0, output_len);
 
   unsigned char token[length];
   int result = RAND_priv_bytes(token, length);
   if (result != 1) {
-    return;
+    return false;
   }
 
-  bytes_to_hex_string(token, length, output, output_len);
+  return bytes_to_hex_string(token, length, output, output_len);
+}
+
+/*
+  generate_key - generate a random array of 'length' bytes, and return a byte
+  array ('output') that contains the key data.
+
+  Returns: true if successful, false otherwise
+
+  The size of 'output' will match 'length';
+
+  e.g. input -> 16
+       output -> d71a16753a7a31d6780ce6318a764524
+*/
+bool generate_key(unsigned int length, unsigned char output[])
+{
+  if (length < KEY_MIN_LEN || length > KEY_MAX_LEN) {
+    return false;
+  }
+
+  memset(output, 0, length);
+
+  int result = RAND_priv_bytes(output, length);
+  if (result != 1) {
+    return false;
+  }
+
+  return true;
 }
 
 /*
@@ -233,6 +266,22 @@ JNIEXPORT jstring JNICALL Java_org_linkja_crypto_Library_generateToken
   char output[(length * 2) + 1];
   generate_token(length, output);
   return (*env)->NewStringUTF(env, output);
+}
+
+JNIEXPORT jbyteArray JNICALL Java_org_linkja_crypto_Library_generateKey
+  (JNIEnv *env, jclass obj, jint length)
+{
+  (void)obj;  // Avoid warning about unused parameters.
+
+  if (length < KEY_MIN_LEN || length > KEY_MAX_LEN) {
+    return NULL;
+  }
+
+  unsigned char output[length];
+  generate_key(length, output);
+  jbyteArray key = (*env)->NewByteArray(env, length);
+  (*env)->SetByteArrayRegion(env, key, 0, length, (jbyte*)output);
+  return key;
 }
 
 JNIEXPORT jstring JNICALL Java_org_linkja_crypto_Library_hash

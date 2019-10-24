@@ -24,6 +24,10 @@ public class Library {
     // be 2x the size of length).
     public static native String generateToken(int length);
 
+    // Generate a random key of the specified length.  The resulting byte array
+    // will be the random token data.
+    public static native byte[] generateKey(int length);
+
     // Return a hash representing this particular build of the library.
     public static native String getLibrarySignature();
 
