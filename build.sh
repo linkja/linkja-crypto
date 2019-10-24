@@ -12,7 +12,7 @@ $JAVA_HOME/bin/javac -h ./src/include ./src/main/java/Library.java
 # Ensure cmake targets are updated
 cmake . -DCMAKE_BUILD_TYPE=Release
 
+mvn clean package
+
 make clean
 make
-
-mvn clean package
