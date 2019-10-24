@@ -17,7 +17,9 @@
 #define TOKEN_MAX_LEN 32768
 
 
-void bytes_to_hex_string(unsigned char* input, unsigned int input_len, char output[], unsigned int output_len);
+bool bytes_to_hex_string(unsigned char* input, unsigned int input_len, char output[], unsigned int output_len);
+
+bool hex_string_to_bytes(const char input[], unsigned int input_len, unsigned char* output, unsigned int output_len);
 
 bool hash_string(const char *string, unsigned char output[]);
 

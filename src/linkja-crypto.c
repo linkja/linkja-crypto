@@ -12,40 +12,78 @@
 
 
 /*
-   - utility method to take an input byte array (`input`) and create
+  bytes_to_hex_string - utility method to take an input byte array (`input`) and create
   a character array representing the hex characters for each byte ('output').
+
+  Returns: true if successful, false otherwise
 */
-void bytes_to_hex_string(unsigned char* input, unsigned int input_len, char output[], unsigned int output_len)
+bool bytes_to_hex_string(unsigned char* input, unsigned int input_len, char output[], unsigned int output_len)
 {
+  if (input == NULL || input_len == 0 || output == NULL || output_len == 0) {
+    return false;
+  }
+
+  // The output array size is twice the input string length (1 byte -> 2 characters)
+  // plus one more (NULL terminator).  If this doesn't match up exactly, we will exit.
+  unsigned int max_output_len = (input_len * 2) + 1;
+  if (max_output_len != output_len) {
+    return false;
+  }
+
   for (unsigned int i = 0; i < input_len; i++) {
-      sprintf(output + (i * 2), "%02x", input[i]);
+    sprintf(output + (i * 2), "%02x", input[i]);
   }
 
   // The last character needs to be NULL string terminator
   output[output_len] = 0;
+  return true;
 }
 
 /*
+  hex_string_to_bytes - utility method to take an input character array ('input') that
+  represents a hexadecimal string, and convert it to the corresponding byte array
+  representation ('output');
+
+  Returns: true if successful, false otherwise
+
   Adapted from https://stackoverflow.com/a/31007189
 */
-void hex_string_to_bytes(const char input[], unsigned int input_len, unsigned char* output)
+bool hex_string_to_bytes(const char input[], unsigned int input_len, unsigned char* output, unsigned int output_len)
 {
+  if (input == NULL || input_len == 0 || output == NULL || output_len == 0) {
+    return false;
+  }
+
+  // The output array size is half the input string length (2 characters -> 1 byte)
+  // If this doesn't match up exactly, we will exit.
+  unsigned int max_output_len = (input_len + 1) / 2;
+  if (max_output_len != output_len) {
+    return false;
+  }
+
   unsigned int input_index = 0;
   unsigned int output_index = 0;
   if (input_len % 2 == 1) {
     // input is an odd length, so assume an implicit "0" prefix
     if (sscanf(&(input[0]), "%1hhx", &(output[0])) != 1) {
-      return;
+      return false;
     }
 
     input_index = output_index = 1;
   }
 
   for (; input_index < input_len; input_index += 2, output_index++) {
+    // If at any point we violate our lengths, we need to stop
+    if (input_index > input_len || output_index > output_len) {
+      return false;
+    }
+
     if (sscanf(&(input[input_index]), "%2hhx", &(output[output_index])) != 1) {
-      return;
+      return false;
     }
   }
+
+  return true;
 }
 
 /*
@@ -53,10 +91,12 @@ void hex_string_to_bytes(const char input[], unsigned int input_len, unsigned ch
   hash and return a character array ('output') that contains the hexadecimal
   representation of the hash.
 
+  Returns: true if successful, false otherwise
+
   This method assumes that 'output' is HASH_OUTPUT_BUFFER_LEN characters in length
 
   e.g. string -> "test"
-       output -> "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"
+       output -> ee26b0dd4af7e749aa1a8ee3c10ae9923f618980772e473f8819a5d4940e0db27ac185f8a0e1d5f84f88bc887fd67b143732c304cc5fa9ad8e6f57f50028a8ff
 */
 bool hash_string(const char *string, unsigned char output[HASH_OUTPUT_BUFFER_LEN])
 {
@@ -70,13 +110,14 @@ bool hash_string(const char *string, unsigned char output[HASH_OUTPUT_BUFFER_LEN
 
 /*
   hash_data - given an input byte array ('data'), calculate the SHA512
-  hash and return a character array ('output') that contains the hexadecimal
-  representation of the hash.
+  hash and return a byte array ('output') that contains the hash.
+
+  Returns: true if successful, false otherwise
 
   This method assumes that 'output' is HASH_OUTPUT_BUFFER_LEN characters in length
 
   e.g. data -> 313233346861736831961E45165B002C23DEC32F60828D5AE37C2ADCB11990B69BA847851E71A0A989
-       output -> "b5499df2a587a3a91390f6f7c632318fbb8078e0907924d2edbdfc3f408ab2c45f5f84ff4dba3dba775c0a475c8429e743eec3c3a44be8f6690535a5533921a5"
+       output -> b5499df2a587a3a91390f6f7c632318fbb8078e0907924d2edbdfc3f408ab2c45f5f84ff4dba3dba775c0a475c8429e743eec3c3a44be8f6690535a5533921a5
 */
 bool hash_data(const unsigned char *data, size_t data_len, unsigned char output[HASH_OUTPUT_BUFFER_LEN])
 {
@@ -89,12 +130,10 @@ bool hash_data(const unsigned char *data, size_t data_len, unsigned char output[
     return false;
   }
 
-  //unsigned char hash[SHA512_DIGEST_LENGTH];
   SHA512_CTX sha256;
   SHA512_Init(&sha256);
   SHA512_Update(&sha256, data, data_len);
   SHA512_Final(output, &sha256);
-  //bytes_to_hex_string(hash, SHA512_DIGEST_LENGTH, output, HASH_OUTPUT_BUFFER_LEN);
   return true;
 }
 
@@ -122,8 +161,11 @@ void generate_token(unsigned int length, char output[])
 }
 
 /*
+  hash_supplemental_data - given a row identifier ('row_id_str') and token identifier
+  ('token_id_str'), create a hash comprised of those values and the project-specific
+  secret hash data.  This will return a byte array ('output') that contains the hash.
 
-  Returns:
+  Returns: true if successful, false otherwise
 */
 bool hash_supplemental_data(const char *row_id_str, jsize row_id_len, const char *token_id_str, jsize token_id_len, unsigned char output[])
 {
@@ -163,6 +205,8 @@ bool hash_supplemental_data(const char *row_id_str, jsize row_id_len, const char
   This is a JNI-specific wrapper around hash_supplemental_data.  It takes as input the
   allowed JNI types.  We created this so that hash_supplemental_data can be easier to
   setup and test for unit testing, without having to construct jstrings.
+
+  Returns: true if successful, false otherwise
 */
 bool generate_supplemental_hash(JNIEnv *env, jstring rowId, jstring tokenId, unsigned char supplemental_hash[])
 {
@@ -224,7 +268,6 @@ JNIEXPORT jstring JNICALL Java_org_linkja_crypto_Library_createSecureHash
     return (*env)->NewStringUTF(env, "");
   }
 
-
   // Generate a second hash based off of our internal secret, the row identifier
   // and the token identifier.  If something went wrong we need to stop processing.
   unsigned char supplemental_hash[HASH_OUTPUT_BUFFER_LEN];
@@ -262,8 +305,11 @@ JNIEXPORT jstring JNICALL Java_org_linkja_crypto_Library_revertSecureHash
   // The output array size is half the hex_str length (rounded up)
   int input_hash_len = (input_len+1)/2;
   unsigned char input_hash[input_hash_len];
-  hex_string_to_bytes(input_str, (int)input_len, input_hash);
+  bool result = hex_string_to_bytes(input_str, (int)input_len, input_hash, input_hash_len);
   (*env)->ReleaseStringUTFChars(env, input, input_str);
+  if (!result) {
+    return (*env)->NewStringUTF(env, "");
+  }
 
   unsigned char original_hash[HASH_OUTPUT_BUFFER_LEN];
   for (int index = 0; index < HASH_OUTPUT_BUFFER_LEN; index++) {

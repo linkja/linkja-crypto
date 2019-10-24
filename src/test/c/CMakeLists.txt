@@ -22,12 +22,18 @@ SET(SOURCES
 	test-linkja-crypto-hash-supplemental-data.c
 )
 ADD_EXECUTABLE(test-linkja-crypto-hash-supplemental-data ${SOURCES})
+SET(SOURCES
+	../../linkja-crypto.c
+	test-linkja-crypto-conversions.c
+)
+ADD_EXECUTABLE(test-linkja-crypto-conversions ${SOURCES})
 
 FIND_PACKAGE(CMOCKA REQUIRED)
 INCLUDE_DIRECTORIES(${LIBCMOCKA_INCLUDE_DIR})
 TARGET_LINK_LIBRARIES(test-linkja-crypto-hash ${LIBCMOCKA_LIBRARIES})
 TARGET_LINK_LIBRARIES(test-linkja-crypto-token ${LIBCMOCKA_LIBRARIES})
 TARGET_LINK_LIBRARIES(test-linkja-crypto-hash-supplemental-data ${LIBCMOCKA_LIBRARIES})
+TARGET_LINK_LIBRARIES(test-linkja-crypto-conversions ${LIBCMOCKA_LIBRARIES})
 
 # Install and register our test programs
 INSTALL(TARGETS test-linkja-crypto-hash RUNTIME DESTINATION out)
@@ -36,6 +42,8 @@ INSTALL(TARGETS test-linkja-crypto-token RUNTIME DESTINATION out)
 add_test(test-linkja-crypto-token ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/test-linkja-crypto-token)
 INSTALL(TARGETS test-linkja-crypto-hash-supplemental-data RUNTIME DESTINATION out)
 add_test(test-linkja-crypto-hash-supplemental-data ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/test-linkja-crypto-hash-supplemental-data)
+INSTALL(TARGETS test-linkja-crypto-conversions RUNTIME DESTINATION out)
+add_test(test-linkja-crypto-conversions ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/test-linkja-crypto-conversions)
 
 
 # Link in openssl
@@ -49,3 +57,4 @@ set_target_properties(openssl PROPERTIES
 target_link_libraries(test-linkja-crypto-hash openssl)
 target_link_libraries(test-linkja-crypto-token openssl)
 target_link_libraries(test-linkja-crypto-hash-supplemental-data openssl)
+target_link_libraries(test-linkja-crypto-conversions openssl)
