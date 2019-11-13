@@ -25,10 +25,18 @@ public class Library {
     public static native String generateToken(int length);
 
     // Generate a random key of the specified length.  The resulting byte array
-    // will be the random token data.
+    // will be the random key data.
     public static native byte[] generateKey(int length);
+
+    // Generate a random IV of the specified length.  The resulting byte array
+    // will be the random key data.
+    public static native byte[] generateIV(int length);
 
     // Return a hash representing this particular build of the library.
     public static native String getLibrarySignature();
+
+    public static native AesResult aesEncrypt(byte[] data, byte[] aad, byte[] key, byte[] iv);
+
+    public static native AesResult aesDecrypt(byte[] data, byte[] aad, byte[] key, byte[] iv, byte[] tag);
 
 }

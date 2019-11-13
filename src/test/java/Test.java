@@ -1,4 +1,5 @@
 import org.linkja.crypto.Library;
+import org.linkja.crypto.AesResult;
 import java.util.Arrays;
 
 public class Test {
@@ -71,6 +72,31 @@ public class Test {
     }
     else {
       System.out.printf("**ERROR : Hash did not revert properly.  Received %s\r\n", originalHash);
+    }
+
+    // AESENCRYPT
+    String toEncrypt = "Q/P1p5MxhzSD2AmyFLiufXvEICN49gAxM2dAGVzK//c=,JJxoVizrAxGs1kRyGoMGGvvw1C+e9xKJTI2rwj8Dmxw=,0iBtATEM/0RDCNYRfb8YFNmsEd8cQKcR5txG2bj8YMU=,XGCnzvIQBtQTrWW1Svs1IArkFBPfv/g4ulXgzb6uuP0=,j6wgTfEuUx6whub452yYu2c93PNC8Ms92c49H3vMWQk=";
+    String aad = "Project12345";
+    byte[] key = library.generateKey(32);
+    byte[] iv = library.generateIV(12);
+    AesResult encryptResult = library.aesEncrypt(toEncrypt.getBytes(), aad.getBytes(), key, iv);
+    if (encryptResult == null || encryptResult.data == null || encryptResult.tag == null) {
+        System.out.println("**ERROR : aesEncrypt did not return a result");
+    }
+    else {
+        System.out.println("OK - aesEncrypt");
+    }
+
+    // AESDECRYPT
+    AesResult decryptResult = library.aesDecrypt(encryptResult.data, aad.getBytes(), key, iv, encryptResult.tag);
+    if (decryptResult == null) {
+        System.out.println("**ERROR : aesDecrypt did not return a result");
+    }
+    else if (!Arrays.equals(toEncrypt.getBytes(), decryptResult.data)) {
+        System.out.println("**ERROR : aesDecrypt returned an invalid result");
+    }
+    else {
+        System.out.println("OK - aesDecrypt");
     }
   }
 }

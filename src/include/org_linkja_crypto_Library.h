@@ -49,11 +49,35 @@ JNIEXPORT jbyteArray JNICALL Java_org_linkja_crypto_Library_generateKey
 
 /*
  * Class:     org_linkja_crypto_Library
+ * Method:    generateIV
+ * Signature: (I)[B
+ */
+JNIEXPORT jbyteArray JNICALL Java_org_linkja_crypto_Library_generateIV
+  (JNIEnv *, jclass, jint);
+
+/*
+ * Class:     org_linkja_crypto_Library
  * Method:    getLibrarySignature
  * Signature: ()Ljava/lang/String;
  */
 JNIEXPORT jstring JNICALL Java_org_linkja_crypto_Library_getLibrarySignature
   (JNIEnv *, jclass);
+
+/*
+ * Class:     org_linkja_crypto_Library
+ * Method:    aesEncrypt
+ * Signature: ([B[B[B[B)Lorg/linkja/crypto/AesResult;
+ */
+JNIEXPORT jobject JNICALL Java_org_linkja_crypto_Library_aesEncrypt
+  (JNIEnv *, jclass, jbyteArray, jbyteArray, jbyteArray, jbyteArray);
+
+/*
+ * Class:     org_linkja_crypto_Library
+ * Method:    aesDecrypt
+ * Signature: ([B[B[B[B[B)Lorg/linkja/crypto/AesResult;
+ */
+JNIEXPORT jobject JNICALL Java_org_linkja_crypto_Library_aesDecrypt
+  (JNIEnv *, jclass, jbyteArray, jbyteArray, jbyteArray, jbyteArray, jbyteArray);
 
 #ifdef __cplusplus
 }

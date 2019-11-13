@@ -43,6 +43,24 @@ static void test_generate_key_just_right(void **state) {
 	assert_true(generate_key(key_len, output));
 }
 
+static void test_generate_iv_too_small(void **state) {
+	int iv_len = (IV_MIN_LEN - 1);
+	unsigned char output[iv_len];
+	assert_false(generate_iv(iv_len, output));
+}
+
+static void test_generate_iv_too_long(void **state) {
+	int iv_len = (IV_MAX_LEN + 1);
+	unsigned char output[iv_len];
+	assert_false(generate_iv(iv_len, output));
+}
+
+static void test_generate_iv_just_right(void **state) {
+	int iv_len = 16;
+	unsigned char output[iv_len];
+	assert_true(generate_iv(iv_len, output));
+}
+
 int main(void) {
 	const struct CMUnitTest tests[] = {
 		cmocka_unit_test(test_generate_token_too_small),
@@ -50,7 +68,10 @@ int main(void) {
 		cmocka_unit_test(test_generate_token_just_right),
 		cmocka_unit_test(test_generate_key_too_small),
 		cmocka_unit_test(test_generate_key_too_long),
-		cmocka_unit_test(test_generate_key_just_right)
+		cmocka_unit_test(test_generate_key_just_right),
+		cmocka_unit_test(test_generate_iv_too_small),
+		cmocka_unit_test(test_generate_iv_too_long),
+		cmocka_unit_test(test_generate_iv_just_right)
 	};
 
 	return cmocka_run_group_tests(tests, NULL, NULL);

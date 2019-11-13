@@ -9,7 +9,183 @@
 #include <openssl/rsa.h>
 #include <openssl/sha.h>
 #include <openssl/rand.h>
+#include <openssl/evp.h>
+#include <openssl/err.h>
 
+
+/*
+    display_aes_error - utility function to wrap the error handling display when
+        encrypt/decrypt fails.  The caller still needs to return the appropriate
+        status code.
+*/
+void display_aes_error(EVP_CIPHER_CTX *ctx)
+{
+    ERR_print_errors_fp(stderr);
+    EVP_CIPHER_CTX_free(ctx);
+}
+
+/*
+    aes_gcm_encrypt - performs AES-256-GCM encryption of `plaintext`, using 'aad' as the
+    additional authenticated data (to detect tampering).
+
+    Output parameters:
+      ciphertext - the encrypted data
+      ciphertext_len - the length of the encrypted data array
+      tag - used during the decryption operation to ensure that the ciphertext
+            and AAD have not been tampered with.
+
+    Returns: true if encryption was successful, false otherwise
+
+    Derived from: https://wiki.openssl.org/index.php/EVP_Authenticated_Encryption_and_Decryption
+    With input from: https://medium.com/@amit.kulkarni/encrypting-decrypting-a-file-using-openssl-evp-b26e0e4d28d4
+*/
+bool aes_gcm_encrypt(unsigned char *plaintext, int plaintext_len,
+                    unsigned char *aad, int aad_len,
+                    unsigned char *key, int key_len,
+                    unsigned char *iv, int iv_len,
+                    unsigned char *ciphertext, int* ciphertext_len,
+                    unsigned char *tag)
+{
+    *ciphertext_len = 0;
+
+    if (plaintext_len <= 0 || aad_len <= 0 || key_len != AES_KEY_SIZE || iv_len <= 0) {
+        return false;
+    }
+
+    // Create and initialise the context
+    EVP_CIPHER_CTX *ctx = NULL;
+    if(!(ctx = EVP_CIPHER_CTX_new())) {
+        display_aes_error(ctx);
+        return false;
+    }
+
+    // Initialise the encryption operation.
+    if(1 != EVP_EncryptInit_ex(ctx, EVP_aes_256_gcm(), NULL, NULL, NULL)) {
+        display_aes_error(ctx);
+        return false;
+    }
+
+    // Set IV length if default 12 bytes (96 bits) is not appropriate
+    if(1 != EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN, iv_len, NULL)) {
+        display_aes_error(ctx);
+        return false;
+    }
+
+    // Initialise key and IV
+    if(1 != EVP_EncryptInit_ex(ctx, NULL, NULL, key, iv)) {
+        display_aes_error(ctx);
+        return false;
+    }
+
+    int len = 0;
+    // Provide any AAD data. This can be called zero or more times as required
+    if(1 != EVP_EncryptUpdate(ctx, NULL, &len, aad, aad_len)) {
+        display_aes_error(ctx);
+        return false;
+    }
+
+    // Provide the message to be encrypted, and obtain the encrypted output.
+    // EVP_EncryptUpdate can be called multiple times if necessary
+    if(1 != EVP_EncryptUpdate(ctx, ciphertext, &len, plaintext, plaintext_len)) {
+        display_aes_error(ctx);
+        return false;
+    }
+    *ciphertext_len = len;
+
+    // Finalise the encryption. Normally ciphertext bytes may be written at
+    // this stage, but this does not occur in GCM mode
+    if(1 != EVP_EncryptFinal_ex(ctx, ciphertext + len, &len)) {
+        display_aes_error(ctx);
+        return false;
+    }
+    *ciphertext_len += len;
+
+    // Get the tag
+    if(1 != EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_GET_TAG, AES_TAG_LEN, tag)) {
+        display_aes_error(ctx);
+        return false;
+    }
+
+    // Clean up
+    EVP_CIPHER_CTX_free(ctx);
+
+    return true;
+}
+
+bool aes_gcm_decrypt(unsigned char *ciphertext, int ciphertext_len,
+                unsigned char *aad, int aad_len,
+                unsigned char *tag,
+                unsigned char *key, int key_len,
+                unsigned char *iv, int iv_len,
+                unsigned char *plaintext, int *plaintext_len)
+{
+    *plaintext_len = 0;
+
+    if (ciphertext_len <= 0 || aad_len <= 0 || key_len <= 0 || iv_len <= 0) {
+        return false;
+    }
+
+    // Create and initialise the context
+    EVP_CIPHER_CTX *ctx = NULL;
+    if(!(ctx = EVP_CIPHER_CTX_new())) {
+        display_aes_error(ctx);
+        return false;
+    }
+
+    // Initialise the decryption operation.
+    if(!EVP_DecryptInit_ex(ctx, EVP_aes_256_gcm(), NULL, NULL, NULL)) {
+        display_aes_error(ctx);
+        return false;
+    }
+
+    // Set IV length. Not necessary if this is 12 bytes (96 bits)
+    if(!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN, iv_len, NULL)) {
+        display_aes_error(ctx);
+        return false;
+    }
+
+    // Initialise key and IV
+    if(!EVP_DecryptInit_ex(ctx, NULL, NULL, key, iv)) {
+        display_aes_error(ctx);
+        return false;
+    }
+
+    // Provide any AAD data. This can be called zero or more times as required
+    int len = 0;
+    if(!EVP_DecryptUpdate(ctx, NULL, &len, aad, aad_len)) {
+        display_aes_error(ctx);
+        return false;
+    }
+
+    // Provide the message to be decrypted, and obtain the plaintext output.
+    // EVP_DecryptUpdate can be called multiple times if necessary
+    if(!EVP_DecryptUpdate(ctx, plaintext, &len, ciphertext, ciphertext_len)) {
+        display_aes_error(ctx);
+        return false;
+    }
+    *plaintext_len = len;
+
+    // Set expected tag value. Works in OpenSSL 1.0.1d and later
+    if(!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_TAG, AES_TAG_LEN, tag)) {
+        display_aes_error(ctx);
+        return false;
+    }
+
+    // Finalise the decryption. A positive return value indicates success,
+    // anything else is a failure - the plaintext is not trustworthy.
+    int ret = EVP_DecryptFinal_ex(ctx, plaintext + len, &len);
+
+    // Clean up
+    EVP_CIPHER_CTX_free(ctx);
+
+    if (ret > 0) {
+        *plaintext_len += len;
+        return true;
+    } else {
+        // Verify failed
+        return false;
+    }
+}
 
 /*
   bytes_to_hex_string - utility method to take an input byte array (`input`) and create
@@ -167,6 +343,32 @@ bool generate_token(unsigned int length, char output[])
 }
 
 /*
+  generate_bytes - internal function to generate a random array of 'length' bytes,
+  and return a byte array ('output') that contains the data.
+
+  NOTE: as an internal function, this assumes all validation checks are done
+        on the parameters before it is called.
+
+  Returns: true if successful, false otherwise
+
+  The size of 'output' will match 'length';
+
+  e.g. input -> 16
+       output -> d71a16753a7a31d6780ce6318a764524
+*/
+bool generate_bytes(unsigned int length, unsigned char output[])
+{
+    memset(output, 0, length);
+
+    int result = RAND_priv_bytes(output, length);
+    if (result != 1) {
+      return false;
+    }
+
+    return true;
+}
+
+/*
   generate_key - generate a random array of 'length' bytes, and return a byte
   array ('output') that contains the key data.
 
@@ -183,14 +385,27 @@ bool generate_key(unsigned int length, unsigned char output[])
     return false;
   }
 
-  memset(output, 0, length);
+  return generate_bytes(length, output);
+}
 
-  int result = RAND_priv_bytes(output, length);
-  if (result != 1) {
+/*
+  generate_iv - generate a random array of 'length' bytes, and return a byte
+  array ('output') that contains the IV data.
+
+  Returns: true if successful, false otherwise
+
+  The size of 'output' will match 'length';
+
+  e.g. input -> 16
+       output -> d71a16753a7a31d6780ce6318a764524
+*/
+bool generate_iv(unsigned int length, unsigned char output[])
+{
+  if (length < IV_MIN_LEN || length > IV_MAX_LEN) {
     return false;
   }
 
-  return true;
+  return generate_bytes(length, output);
 }
 
 /*
@@ -284,6 +499,22 @@ JNIEXPORT jbyteArray JNICALL Java_org_linkja_crypto_Library_generateKey
   return key;
 }
 
+JNIEXPORT jbyteArray JNICALL Java_org_linkja_crypto_Library_generateIV
+  (JNIEnv *env, jclass obj, jint length)
+{
+  (void)obj;  // Avoid warning about unused parameters.
+
+  if (length < IV_MIN_LEN || length > IV_MAX_LEN) {
+    return NULL;
+  }
+
+  unsigned char output[length];
+  generate_iv(length, output);
+  jbyteArray key = (*env)->NewByteArray(env, length);
+  (*env)->SetByteArrayRegion(env, key, 0, length, (jbyte*)output);
+  return key;
+}
+
 JNIEXPORT jstring JNICALL Java_org_linkja_crypto_Library_hash
   (JNIEnv *env, jclass obj, jstring input)
 {
@@ -368,6 +599,126 @@ JNIEXPORT jstring JNICALL Java_org_linkja_crypto_Library_revertSecureHash
   char output[HASH_STRING_OUTPUT_BUFFER_LEN];
   bytes_to_hex_string(original_hash, HASH_OUTPUT_BUFFER_LEN, output, HASH_STRING_OUTPUT_BUFFER_LEN);
   return (*env)->NewStringUTF(env, output);
+}
+
+jobject aesEncryptDecrypt
+  (JNIEnv *env, jbyteArray data, jbyteArray aad, jbyteArray key, jbyteArray iv, jbyteArray tag, bool encrypt)
+{
+    // All byte arrays must be defined.  Note that tag can be empty, but only for
+    // the encryption call (because we need to specify it).
+    if (data == NULL || aad == NULL || key == NULL || iv == NULL) {
+        return NULL;
+    }
+
+    // If we're decrypting and there is no tag, then we will have to exit.
+    if (!encrypt && tag == NULL) {
+        return NULL;
+    }
+
+    // Now we can safely get our array lengths
+    jsize data_array_len = (*env)->GetArrayLength(env, data);
+    jsize aad_array_len = (*env)->GetArrayLength(env, aad);
+    jsize key_array_len = (*env)->GetArrayLength(env, key);
+    jsize iv_array_len = (*env)->GetArrayLength(env, iv);
+
+    // All of the arrays need to be populated.  If this is not the case, we need
+    // to exit now and won't do any other processing.
+    if (data_array_len <= 0 || aad_array_len <= 0 || key_array_len != AES_KEY_SIZE || iv_array_len <= 0) {
+        return NULL;
+    }
+
+    // Manage array lengths for the tag, but only when decrypting.
+    if (!encrypt) {
+        jsize tag_array_len = (*env)->GetArrayLength(env, tag);
+        if (tag_array_len != AES_TAG_LEN) {
+            return NULL;
+        }
+    }
+
+    // Get the data
+    jbyte* data_array = (*env)->GetByteArrayElements(env, data, NULL);
+    jbyte* aad_array = (*env)->GetByteArrayElements(env, aad, NULL);
+    jbyte* key_array = (*env)->GetByteArrayElements(env, key, NULL);
+    jbyte* iv_array = (*env)->GetByteArrayElements(env, iv, NULL);
+    unsigned char tag_array[AES_TAG_LEN];
+    if (!encrypt) {
+        (*env)->GetByteArrayRegion(env, tag, 0, AES_TAG_LEN, (jbyte*)tag_array);
+    }
+
+    int output_array_max_len = (encrypt ? ENCRYPTED_ARRAY_LEN(data_array_len) : data_array_len);
+    unsigned char output_array[output_array_max_len];
+    int output_array_len = 0;  // Actual length
+    bool result = false;
+    if (encrypt) {
+        result =  aes_gcm_encrypt((unsigned char *)data_array, data_array_len,
+                            (unsigned char *)aad_array, aad_array_len,
+                            (unsigned char *)key_array, key_array_len,
+                            (unsigned char *)iv_array, iv_array_len,
+                            output_array, &output_array_len,
+                            tag_array);
+    }
+    else {
+        result =  aes_gcm_decrypt((unsigned char *)data_array, data_array_len,
+                            (unsigned char *)aad_array, aad_array_len,
+                            tag_array,
+                            (unsigned char *)key_array, key_array_len,
+                            (unsigned char *)iv_array, iv_array_len,
+                            output_array, &output_array_len);
+    }
+
+    (*env)->ReleaseByteArrayElements(env, data, data_array, 0);
+    (*env)->ReleaseByteArrayElements(env, aad, aad_array, 0);
+    (*env)->ReleaseByteArrayElements(env, key, key_array, 0);
+    (*env)->ReleaseByteArrayElements(env, iv, iv_array, 0);
+
+    if (!result) {
+        return NULL;
+    }
+
+    jclass java_class = (*env)->FindClass(env, "org/linkja/crypto/AesResult");
+    if (java_class == NULL) {
+        return NULL;
+    }
+    jobject result_obj = (*env)->AllocObject(env, java_class);
+    if (result_obj == NULL) {
+        return NULL;
+    }
+
+    jbyteArray output = (*env)->NewByteArray(env, output_array_len);
+    (*env)->SetByteArrayRegion(env, output, 0, output_array_len, (jbyte*)output_array);
+    jfieldID enc_data_id = (*env)->GetFieldID(env, java_class, "data", "[B");
+    if (enc_data_id == NULL) {
+        return NULL;
+    }
+
+    (*env)->SetObjectField(env, result_obj, enc_data_id, output);
+
+    jfieldID tag_id = (*env)->GetFieldID(env, java_class, "tag", "[B");
+    if (tag_id == NULL) {
+        return NULL;
+    }
+
+    jbyteArray tag_output = (*env)->NewByteArray(env, AES_TAG_LEN);
+    (*env)->SetByteArrayRegion(env, tag_output, 0, AES_TAG_LEN, (jbyte*)tag_array);
+    (*env)->SetObjectField(env, result_obj, tag_id, tag_output);
+
+    return result_obj;
+}
+
+JNIEXPORT jobject JNICALL Java_org_linkja_crypto_Library_aesEncrypt
+  (JNIEnv *env, jclass obj, jbyteArray data, jbyteArray aad, jbyteArray key, jbyteArray iv)
+{
+    (void)obj;  // Avoid warning about unused parameters.
+
+    return aesEncryptDecrypt(env, data, aad, key, iv, NULL, true);
+}
+
+JNIEXPORT jobject JNICALL Java_org_linkja_crypto_Library_aesDecrypt
+  (JNIEnv *env, jclass obj, jbyteArray data, jbyteArray aad, jbyteArray key, jbyteArray iv, jbyteArray tag)
+{
+    (void)obj;  // Avoid warning about unused parameters.
+
+    return aesEncryptDecrypt(env, data, aad, key, iv, tag, false);
 }
 
 JNIEXPORT jstring JNICALL Java_org_linkja_crypto_Library_getLibrarySignature
