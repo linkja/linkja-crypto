@@ -8,6 +8,7 @@ headers with the C code.
 ## Dependencies
 
 Setup and building of the linkja-crypto library requires the following:
+
 1. [CMake](https://cmake.org) (3.8 or higher)
 2. Java (1.8 or higher; [OpenJDK](https://openjdk.java.net/) is allowed)
     1. Requires the JDK to be installed
