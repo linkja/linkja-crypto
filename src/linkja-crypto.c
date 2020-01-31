@@ -240,7 +240,7 @@ bool rsa_encrypt(unsigned char *plaintext, int plaintext_len,
     *ciphertext_len = RSA_public_encrypt(plaintext_len, plaintext, ciphertext, rsa, RSA_PKCS1_OAEP_PADDING);
     RSA_free(rsa);
     if (*ciphertext_len == -1) {
-        free(ciphertext);
+        memset(ciphertext, 0, MAX_PLAINTEXT_LEN);
         display_openssl_error(ctx);
         return false;
     }
@@ -302,7 +302,7 @@ bool rsa_decrypt(unsigned char *ciphertext, int ciphertext_len,
     *plaintext_len = RSA_private_decrypt(ciphertext_len, ciphertext, plaintext, rsa, RSA_PKCS1_OAEP_PADDING);
     RSA_free(rsa);
     if (*plaintext_len == -1) {
-        free(plaintext);
+        memset(plaintext, 0, MAX_PLAINTEXT_LEN);
         display_openssl_error(ctx);
         return false;
     }

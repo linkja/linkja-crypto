@@ -11,6 +11,10 @@
 
 static unsigned char* read_pem_key(char *file_name, size_t *file_len) {
     FILE *fp = fopen(file_name, "rb");
+    if (fp == NULL) {
+        return NULL;
+    }
+    
     fseek(fp, 0, SEEK_END);
     *file_len = ftell(fp);
     fseek(fp, 0, SEEK_SET);
