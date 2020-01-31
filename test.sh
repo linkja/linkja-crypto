@@ -18,8 +18,8 @@ ctest -V
 export JAVA_HOME=$(/usr/libexec/java_home)
 
 # Compile our simple test program
-$JAVA_HOME/bin/javac -cp ./target/linkja-crypto-0.4.0.jar ./src/test/java/Test.java
+$JAVA_HOME/bin/javac -cp ./target/linkja-crypto-0.4.1.jar ./src/test/java/Test.java
 
 # Run the test program, ensuring that we specify where our Java library exists,
 # as well as the path where the dylib exists (both in ./out)
-$JAVA_HOME/bin/java -cp ./target/linkja-crypto-0.4.0.jar:./src/test/java -Djava.library.path=./target Test
+$JAVA_HOME/bin/java -cp ./target/linkja-crypto-0.4.1.jar:./src/test/java -Djava.library.path=./target Test
