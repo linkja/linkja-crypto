@@ -1,8 +1,22 @@
 import org.linkja.crypto.Library;
 import org.linkja.crypto.AesResult;
+import org.linkja.crypto.RsaResult;
 import java.util.Arrays;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 public class Test {
+    public static byte[] readFile(String fileName) {
+        try {
+            byte[] bytes = Files.readAllBytes(Paths.get(fileName));
+            return bytes;
+        }
+        catch (java.io.IOException exc) {
+            exc.printStackTrace();
+        }
+        return null;
+    }
+
   // A very basic tester for linkja-crypto integration tests
   public static void main(String[] args) {
     Library library = new Library();
@@ -97,6 +111,30 @@ public class Test {
     }
     else {
         System.out.println("OK - aesDecrypt");
+    }
+
+    // RSAENCRYPT
+    toEncrypt = "12345678901234567890abcdefg";
+    key = readFile("src/test/c/public-test.key");
+    RsaResult rsaEncryptResult = library.rsaEncrypt(toEncrypt.getBytes(), key);
+    if (rsaEncryptResult == null || rsaEncryptResult.data == null || rsaEncryptResult.length <= 0) {
+        System.out.println("**ERROR : rsaEncrypt did not return a result");
+    }
+    else {
+        System.out.println("OK - rsaEncrypt");
+    }
+
+    // RSADECRYPT
+    key = readFile("src/test/c/private-test.key");
+    RsaResult rsaDecryptResult = library.rsaDecrypt(rsaEncryptResult.data, key);
+    if (rsaDecryptResult == null) {
+        System.out.println("**ERROR : rsaDecrypt did not return a result");
+    }
+    else if (!Arrays.equals(toEncrypt.getBytes(), rsaDecryptResult.data)) {
+        System.out.println("**ERROR : rsaDecrypt returned an invalid result");
+    }
+    else {
+        System.out.println("OK - rsaDecrypt");
     }
   }
 }

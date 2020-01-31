@@ -832,6 +832,82 @@ jobject aesEncryptDecrypt
     return result_obj;
 }
 
+jobject rsaEncryptDecrypt
+  (JNIEnv *env, jbyteArray data, jbyteArray key, bool encrypt)
+{
+    // All byte arrays must be defined.
+    if (data == NULL || key == NULL) {
+        printf("1\r\n");
+        return NULL;
+    }
+
+    // Now we can safely get our array lengths
+    jsize data_array_len = (*env)->GetArrayLength(env, data);
+    jsize key_array_len = (*env)->GetArrayLength(env, key);
+
+    // All of the arrays need to be populated.  If this is not the case, we need
+    // to exit now and won't do any other processing.
+    if (data_array_len <= 0 || key_array_len <= 0) {
+        printf("2\r\n");
+        return NULL;
+    }
+
+    // Get the data
+    jbyte* data_array = (*env)->GetByteArrayElements(env, data, NULL);
+    jbyte* key_array = (*env)->GetByteArrayElements(env, key, NULL);
+
+    unsigned char output_array[RSA_KEY_SIZE];
+    int output_array_len = 0;  // Actual length
+    bool result = false;
+    if (encrypt) {
+        result =  rsa_encrypt((unsigned char *)data_array, data_array_len,
+                            (unsigned char *)key_array, key_array_len,
+                            output_array, &output_array_len);
+    }
+    else {
+        result =  rsa_decrypt((unsigned char *)data_array, data_array_len,
+                            (unsigned char *)key_array, key_array_len,
+                            output_array, &output_array_len);
+    }
+
+    (*env)->ReleaseByteArrayElements(env, data, data_array, 0);
+    (*env)->ReleaseByteArrayElements(env, key, key_array, 0);
+
+    if (!result) {
+        printf("3\r\n");
+        return NULL;
+    }
+
+    jclass java_class = (*env)->FindClass(env, "org/linkja/crypto/RsaResult");
+    if (java_class == NULL) {
+        printf("4\r\n");
+        return NULL;
+    }
+    jobject result_obj = (*env)->AllocObject(env, java_class);
+    if (result_obj == NULL) {
+        printf("5\r\n");
+        return NULL;
+    }
+
+    jbyteArray output = (*env)->NewByteArray(env, output_array_len);
+    (*env)->SetByteArrayRegion(env, output, 0, output_array_len, (jbyte*)output_array);
+    jfieldID enc_data_id = (*env)->GetFieldID(env, java_class, "data", "[B");
+    if (enc_data_id == NULL) {
+        return NULL;
+    }
+
+    (*env)->SetObjectField(env, result_obj, enc_data_id, output);
+
+    jfieldID length_id = (*env)->GetFieldID(env, java_class, "length", "I");
+    if (length_id == NULL) {
+        return NULL;
+    }
+
+    (*env)->SetIntField(env, result_obj, length_id, output_array_len);
+
+    return result_obj;
+}
+
 JNIEXPORT jobject JNICALL Java_org_linkja_crypto_Library_aesEncrypt
   (JNIEnv *env, jclass obj, jbyteArray data, jbyteArray aad, jbyteArray key, jbyteArray iv)
 {
@@ -846,6 +922,22 @@ JNIEXPORT jobject JNICALL Java_org_linkja_crypto_Library_aesDecrypt
     (void)obj;  // Avoid warning about unused parameters.
 
     return aesEncryptDecrypt(env, data, aad, key, iv, tag, false);
+}
+
+JNIEXPORT jobject JNICALL Java_org_linkja_crypto_Library_rsaEncrypt
+  (JNIEnv *env, jclass obj, jbyteArray data, jbyteArray key)
+{
+    (void)obj;  // Avoid warning about unused parameters.
+
+    return rsaEncryptDecrypt(env, data, key, true);
+}
+
+JNIEXPORT jobject JNICALL Java_org_linkja_crypto_Library_rsaDecrypt
+  (JNIEnv *env, jclass obj, jbyteArray data, jbyteArray key)
+{
+    (void)obj;  // Avoid warning about unused parameters.
+
+    return rsaEncryptDecrypt(env, data, key, false);
 }
 
 JNIEXPORT jstring JNICALL Java_org_linkja_crypto_Library_getLibrarySignature

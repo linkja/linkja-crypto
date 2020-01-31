@@ -79,6 +79,22 @@ JNIEXPORT jobject JNICALL Java_org_linkja_crypto_Library_aesEncrypt
 JNIEXPORT jobject JNICALL Java_org_linkja_crypto_Library_aesDecrypt
   (JNIEnv *, jclass, jbyteArray, jbyteArray, jbyteArray, jbyteArray, jbyteArray);
 
+/*
+ * Class:     org_linkja_crypto_Library
+ * Method:    rsaEncrypt
+ * Signature: ([B[B)Lorg/linkja/crypto/RsaResult;
+ */
+JNIEXPORT jobject JNICALL Java_org_linkja_crypto_Library_rsaEncrypt
+  (JNIEnv *, jclass, jbyteArray, jbyteArray);
+
+/*
+ * Class:     org_linkja_crypto_Library
+ * Method:    rsaDecrypt
+ * Signature: ([B[B)Lorg/linkja/crypto/RsaResult;
+ */
+JNIEXPORT jobject JNICALL Java_org_linkja_crypto_Library_rsaDecrypt
+  (JNIEnv *, jclass, jbyteArray, jbyteArray);
+
 #ifdef __cplusplus
 }
 #endif

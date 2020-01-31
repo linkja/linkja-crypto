@@ -39,4 +39,8 @@ public class Library {
 
     public static native AesResult aesDecrypt(byte[] data, byte[] aad, byte[] key, byte[] iv, byte[] tag);
 
+    public static native RsaResult rsaEncrypt(byte[] data, byte[] key);
+
+    public static native RsaResult rsaDecrypt(byte[] data, byte[] key);
+
 }
