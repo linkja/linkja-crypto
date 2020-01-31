@@ -6,19 +6,20 @@
 #include "include/org_linkja_crypto_Library.h"
 #include "include/linkja_secret.h"
 
+#include <openssl/err.h>
 #include <openssl/rsa.h>
 #include <openssl/sha.h>
 #include <openssl/rand.h>
 #include <openssl/evp.h>
-#include <openssl/err.h>
+#include <openssl/pem.h>
 
 
 /*
-    display_aes_error - utility function to wrap the error handling display when
+    display_openssl_error - utility function to wrap the error handling display when
         encrypt/decrypt fails.  The caller still needs to return the appropriate
         status code.
 */
-void display_aes_error(EVP_CIPHER_CTX *ctx)
+void display_openssl_error(EVP_CIPHER_CTX *ctx)
 {
     ERR_print_errors_fp(stderr);
     EVP_CIPHER_CTX_free(ctx);
@@ -55,39 +56,39 @@ bool aes_gcm_encrypt(unsigned char *plaintext, int plaintext_len,
     // Create and initialise the context
     EVP_CIPHER_CTX *ctx = NULL;
     if(!(ctx = EVP_CIPHER_CTX_new())) {
-        display_aes_error(ctx);
+        display_openssl_error(ctx);
         return false;
     }
 
     // Initialise the encryption operation.
     if(1 != EVP_EncryptInit_ex(ctx, EVP_aes_256_gcm(), NULL, NULL, NULL)) {
-        display_aes_error(ctx);
+        display_openssl_error(ctx);
         return false;
     }
 
     // Set IV length if default 12 bytes (96 bits) is not appropriate
     if(1 != EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN, iv_len, NULL)) {
-        display_aes_error(ctx);
+        display_openssl_error(ctx);
         return false;
     }
 
     // Initialise key and IV
     if(1 != EVP_EncryptInit_ex(ctx, NULL, NULL, key, iv)) {
-        display_aes_error(ctx);
+        display_openssl_error(ctx);
         return false;
     }
 
     int len = 0;
     // Provide any AAD data. This can be called zero or more times as required
     if(1 != EVP_EncryptUpdate(ctx, NULL, &len, aad, aad_len)) {
-        display_aes_error(ctx);
+        display_openssl_error(ctx);
         return false;
     }
 
     // Provide the message to be encrypted, and obtain the encrypted output.
     // EVP_EncryptUpdate can be called multiple times if necessary
     if(1 != EVP_EncryptUpdate(ctx, ciphertext, &len, plaintext, plaintext_len)) {
-        display_aes_error(ctx);
+        display_openssl_error(ctx);
         return false;
     }
     *ciphertext_len = len;
@@ -95,14 +96,14 @@ bool aes_gcm_encrypt(unsigned char *plaintext, int plaintext_len,
     // Finalise the encryption. Normally ciphertext bytes may be written at
     // this stage, but this does not occur in GCM mode
     if(1 != EVP_EncryptFinal_ex(ctx, ciphertext + len, &len)) {
-        display_aes_error(ctx);
+        display_openssl_error(ctx);
         return false;
     }
     *ciphertext_len += len;
 
     // Get the tag
     if(1 != EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_GET_TAG, AES_TAG_LEN, tag)) {
-        display_aes_error(ctx);
+        display_openssl_error(ctx);
         return false;
     }
 
@@ -128,46 +129,46 @@ bool aes_gcm_decrypt(unsigned char *ciphertext, int ciphertext_len,
     // Create and initialise the context
     EVP_CIPHER_CTX *ctx = NULL;
     if(!(ctx = EVP_CIPHER_CTX_new())) {
-        display_aes_error(ctx);
+        display_openssl_error(ctx);
         return false;
     }
 
     // Initialise the decryption operation.
     if(!EVP_DecryptInit_ex(ctx, EVP_aes_256_gcm(), NULL, NULL, NULL)) {
-        display_aes_error(ctx);
+        display_openssl_error(ctx);
         return false;
     }
 
     // Set IV length. Not necessary if this is 12 bytes (96 bits)
     if(!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN, iv_len, NULL)) {
-        display_aes_error(ctx);
+        display_openssl_error(ctx);
         return false;
     }
 
     // Initialise key and IV
     if(!EVP_DecryptInit_ex(ctx, NULL, NULL, key, iv)) {
-        display_aes_error(ctx);
+        display_openssl_error(ctx);
         return false;
     }
 
     // Provide any AAD data. This can be called zero or more times as required
     int len = 0;
     if(!EVP_DecryptUpdate(ctx, NULL, &len, aad, aad_len)) {
-        display_aes_error(ctx);
+        display_openssl_error(ctx);
         return false;
     }
 
     // Provide the message to be decrypted, and obtain the plaintext output.
     // EVP_DecryptUpdate can be called multiple times if necessary
     if(!EVP_DecryptUpdate(ctx, plaintext, &len, ciphertext, ciphertext_len)) {
-        display_aes_error(ctx);
+        display_openssl_error(ctx);
         return false;
     }
     *plaintext_len = len;
 
     // Set expected tag value. Works in OpenSSL 1.0.1d and later
     if(!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_TAG, AES_TAG_LEN, tag)) {
-        display_aes_error(ctx);
+        display_openssl_error(ctx);
         return false;
     }
 
@@ -186,6 +187,132 @@ bool aes_gcm_decrypt(unsigned char *ciphertext, int ciphertext_len,
         return false;
     }
 }
+
+bool rsa_encrypt(unsigned char *plaintext, int plaintext_len,
+                 unsigned char *key, int key_len,
+                 unsigned char *ciphertext, int* ciphertext_len)
+{
+
+    if (plaintext_len > MAX_PLAINTEXT_LEN) {
+        fprintf(stderr, "Input cannot exceed %d bytes, but was %d\r\n", MAX_PLAINTEXT_LEN, plaintext_len);
+        return false;
+    }
+
+    if (ciphertext == NULL) {
+        fprintf(stderr, "The encrypted output array must be allocated before calling rsa_encrypt\r\n");
+        return false;
+    }
+    memset(ciphertext, 0, MAX_PLAINTEXT_LEN);
+
+    // Create and initialise the context
+    EVP_CIPHER_CTX *ctx = NULL;
+    if(!(ctx = EVP_CIPHER_CTX_new())) {
+        display_openssl_error(ctx);
+        return false;
+    }
+
+    BIO *key_mem = BIO_new_mem_buf(key, key_len);
+    if (key_mem == NULL) {
+        display_openssl_error(ctx);
+        return false;
+    }
+
+    EVP_PKEY *public_key = PEM_read_bio_PUBKEY(key_mem, NULL, NULL, NULL);
+    BIO_free(key_mem);
+    if (public_key == NULL) {
+        display_openssl_error(ctx);
+        return false;
+    }
+
+    RSA *rsa = EVP_PKEY_get1_RSA(public_key);
+    EVP_PKEY_free(public_key);
+    if (rsa == NULL) {
+        display_openssl_error(ctx);
+        return false;
+    }
+    else if (RSA_size(rsa) != RSA_KEY_SIZE) {
+        fprintf(stderr, "We are only able to handle a key size of %d, but received %d\r\n", (RSA_KEY_SIZE * 8), (RSA_size(rsa) * 8));
+        RSA_free(rsa);
+        EVP_CIPHER_CTX_free(ctx);
+        return false;
+    }
+
+    *ciphertext_len = RSA_public_encrypt(plaintext_len, plaintext, ciphertext, rsa, RSA_PKCS1_OAEP_PADDING);
+    RSA_free(rsa);
+    if (*ciphertext_len == -1) {
+        free(ciphertext);
+        display_openssl_error(ctx);
+        return false;
+    }
+
+    // Clean up
+    EVP_CIPHER_CTX_free(ctx);
+
+    return true;
+}
+
+bool rsa_decrypt(unsigned char *ciphertext, int ciphertext_len,
+                 unsigned char *key, int key_len,
+                 unsigned char *plaintext, int *plaintext_len)
+{
+    if (ciphertext_len > RSA_KEY_SIZE) {
+        fprintf(stderr, "Input cannot exceed %d bytes, but was %d\r\n", RSA_KEY_SIZE, ciphertext_len);
+        return false;
+    }
+
+    if (plaintext == NULL) {
+        fprintf(stderr, "The decrypted output array must be allocated before calling rsa_decrypt\r\n");
+        return false;
+    }
+    memset(plaintext, 0, RSA_KEY_SIZE);
+
+    // Create and initialise the context
+    EVP_CIPHER_CTX *ctx = NULL;
+    if(!(ctx = EVP_CIPHER_CTX_new())) {
+        display_openssl_error(ctx);
+        return false;
+    }
+
+    BIO *key_mem = BIO_new_mem_buf(key, key_len);
+    if (key_mem == NULL) {
+        display_openssl_error(ctx);
+        return false;
+    }
+
+    EVP_PKEY *private_key = PEM_read_bio_PrivateKey(key_mem, NULL, NULL, NULL);
+    BIO_free(key_mem);
+    if (private_key == NULL) {
+        display_openssl_error(ctx);
+        return false;
+    }
+
+    RSA *rsa = EVP_PKEY_get1_RSA(private_key);
+    EVP_PKEY_free(private_key);
+    if (rsa == NULL) {
+        display_openssl_error(ctx);
+        return false;
+    }
+    else if (RSA_size(rsa) != RSA_KEY_SIZE) {
+        fprintf(stderr, "We are only able to handle a key size of %d, but received %d\r\n", (RSA_KEY_SIZE * 8), (RSA_size(rsa) * 8));
+        RSA_free(rsa);
+        EVP_CIPHER_CTX_free(ctx);
+        return false;
+    }
+
+    *plaintext_len = RSA_private_decrypt(ciphertext_len, ciphertext, plaintext, rsa, RSA_PKCS1_OAEP_PADDING);
+    RSA_free(rsa);
+    if (*plaintext_len == -1) {
+        free(plaintext);
+        display_openssl_error(ctx);
+        return false;
+    }
+
+    // Clean up
+    EVP_CIPHER_CTX_free(ctx);
+
+    return true;
+}
+
 
 /*
   bytes_to_hex_string - utility method to take an input byte array (`input`) and create

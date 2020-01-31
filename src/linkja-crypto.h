@@ -32,6 +32,14 @@
 #define IV_MIN_LEN AES_DEFAULT_IV_LEN
 #define IV_MAX_LEN 256      // Arbitrary max
 
+
+#define RSA_KEY_SIZE 128   // Assuming 2048 bit keys
+
+// Padding of RSA_PKCS1_OAEP_PADDING is recommended, per:
+// https://www.openssl.org/docs/manmaster/man3/RSA_public_encrypt.html
+// plaintext_len can't exceed RSA_size(rsa) - 42 for RSA_PKCS1_OAEP_PADDING
+#define MAX_PLAINTEXT_LEN (RSA_KEY_SIZE - 42)
+
 // Calculate the maximum encrypted array length that we can expect
 #define ENCRYPTED_ARRAY_LEN(data_len) (AES_BLOCK_SIZE + data_len)
 
@@ -49,6 +57,14 @@ bool aes_gcm_decrypt(unsigned char *ciphertext, int ciphertext_len,
                     unsigned char *key, int key_len,
                     unsigned char *iv, int iv_len,
                     unsigned char *plaintext, int *plaintext_len);
+
+bool rsa_encrypt(unsigned char *plaintext, int plaintext_len,
+                 unsigned char *key, int key_len,
+                 unsigned char *ciphertext, int* ciphertext_len);
+
+bool rsa_decrypt(unsigned char *ciphertext, int ciphertext_len,
+                 unsigned char *key, int key_len,
+                 unsigned char *plaintext, int *plaintext_len);
 
 bool bytes_to_hex_string(unsigned char* input, unsigned int input_len, char output[], unsigned int output_len);
 
