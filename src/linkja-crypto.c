@@ -429,7 +429,7 @@ bool hash_data(const unsigned char *data, size_t data_len, unsigned char output[
   // Note that we are allowing data where the length is 0.  Just like with an empty
   // string, we can generate a hash from that, so we need to allow that to be
   // processed.
-  if (data == NULL || data_len < 0) {
+  if (data == NULL) { // || data_len < 0) {
     return false;
   }
 
@@ -656,7 +656,7 @@ JNIEXPORT jstring JNICALL Java_org_linkja_crypto_Library_hash
     return (*env)->NewStringUTF(env, "");
   }
 
-  char output[HASH_STRING_OUTPUT_BUFFER_LEN];
+  char output[HASH_STRING_OUTPUT_BUFFER_LEN + 1];
   bytes_to_hex_string(hash, HASH_OUTPUT_BUFFER_LEN, output, HASH_STRING_OUTPUT_BUFFER_LEN);
   return (*env)->NewStringUTF(env, output);
 }
@@ -687,7 +687,7 @@ JNIEXPORT jstring JNICALL Java_org_linkja_crypto_Library_createSecureHash
     final_hash[index] = hash1[index] ^ supplemental_hash[index];
   }
 
-  char output[HASH_STRING_OUTPUT_BUFFER_LEN];
+  char output[HASH_STRING_OUTPUT_BUFFER_LEN + 1];
   bytes_to_hex_string(final_hash, HASH_OUTPUT_BUFFER_LEN, output, HASH_STRING_OUTPUT_BUFFER_LEN);
   return (*env)->NewStringUTF(env, output);
 }
@@ -723,7 +723,7 @@ JNIEXPORT jstring JNICALL Java_org_linkja_crypto_Library_revertSecureHash
     original_hash[index] = input_hash[index] ^ supplemental_hash[index];
   }
 
-  char output[HASH_STRING_OUTPUT_BUFFER_LEN];
+  char output[HASH_STRING_OUTPUT_BUFFER_LEN + 1];
   bytes_to_hex_string(original_hash, HASH_OUTPUT_BUFFER_LEN, output, HASH_STRING_OUTPUT_BUFFER_LEN);
   return (*env)->NewStringUTF(env, output);
 }

@@ -43,9 +43,19 @@ endif()
 
 # Link in openssl
 add_library(openssl STATIC IMPORTED) # or STATIC instead of SHARED
+
+#if(APPLE)
+#	set_target_properties(openssl PROPERTIES
+#		IMPORTED_LOCATION "${CMAKE_SOURCE_DIR}/lib/openssl/macos/libcrypto.a"
+#		INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/lib/openssl/include"
+#	)
+#endif()
+
+
 set_target_properties(openssl PROPERTIES
-  IMPORTED_LOCATION "${CMAKE_SOURCE_DIR}/lib/openssl/macos/libcrypto.a"
-  INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/lib/openssl/include"
+	IMPORTED_IMPLIB "${CMAKE_SOURCE_DIR}/lib/openssl/windows/libcrypto.a"
+	IMPORTED_LOCATION "${CMAKE_SOURCE_DIR}/lib/openssl/windows/libcrypto-1_1-x64.dll"
+	INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/lib/openssl/include"
 )
 
 # Specify the .c file that creates our shared library

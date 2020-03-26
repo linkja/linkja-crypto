@@ -10,8 +10,11 @@ find_package(JNI REQUIRED)
 include(UseJava)
 message(STATUS "Using Java ${Java_VERSION_STRING}")
 message(STATUS "  - Java compiler ${Java_JAVAC_EXECUTABLE}")
-SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/build/modules")
-find_package(CMOCKA REQUIRED)
+
+if (APPLE)
+	SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/build/modules")
+	find_package(CMOCKA QUIET)
+endif()
 
 project ("liblinkjacrypto")
 
@@ -34,5 +37,7 @@ unset(VERSION)
 add_subdirectory ("src")
 
 # Include our C unit tests
-enable_testing()
-add_subdirectory(src/test/c)
+if (APPLE)
+ 	enable_testing()
+	add_subdirectory(src/test/c)
+endif()
