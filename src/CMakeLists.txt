@@ -40,13 +40,15 @@ else()
   file(APPEND include/linkja_secret.h "}\n#define LINKJA_SECRET_HASH \"${RANDOM_VALUE_HASH}\" \n\n#endif\n")
 endif()
 
-
+set(OPENSSL_USE_STATIC_LIBS TRUE)
+find_package(OpenSSL REQUIRED)
 # Link in openssl
-add_library(openssl STATIC IMPORTED) # or STATIC instead of SHARED
-set_target_properties(openssl PROPERTIES
-  IMPORTED_LOCATION "${CMAKE_SOURCE_DIR}/lib/openssl/macos/libcrypto.a"
-  INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/lib/openssl/include"
-)
+#add_library(openssl STATIC IMPORTED) # or STATIC instead of SHARED
+#set_target_properties(openssl PROPERTIES
+#  IMPORTED_LINK_INTERFACE_LANGUAGES "C"
+#  IMPORTED_LOCATION "/usr/lib/x86_64-linux-gnu/libcrypto.so"
+#  INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/lib/openssl/include"
+#)
 
 # Specify the .c file that creates our shared library
 add_library(linkjacrypto SHARED "linkja-crypto.c")
@@ -55,7 +57,8 @@ add_library(linkjacrypto SHARED "linkja-crypto.c")
 target_compile_options(linkjacrypto PRIVATE -Wall -Wextra -Wpedantic -Werror)
 
 # Add the dependency to link to the openssl library
-target_link_libraries(linkjacrypto openssl)
+#target_link_libraries(linkjacrypto openssl)
+target_link_libraries(linkjacrypto PRIVATE OpenSSL::SSL OpenSSL::Crypto)
 
 # Specify the directory where we want our final library written
 set_target_properties(linkjacrypto

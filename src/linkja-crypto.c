@@ -429,7 +429,7 @@ bool hash_data(const unsigned char *data, size_t data_len, unsigned char output[
   // Note that we are allowing data where the length is 0.  Just like with an empty
   // string, we can generate a hash from that, so we need to allow that to be
   // processed.
-  if (data == NULL || data_len < 0) {
+  if (data == NULL) {
     return false;
   }
 
