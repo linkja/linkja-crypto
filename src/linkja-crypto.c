@@ -193,8 +193,8 @@ bool rsa_encrypt(unsigned char *plaintext, int plaintext_len,
                  unsigned char *ciphertext, int* ciphertext_len)
 {
 
-    if (plaintext_len > MAX_PLAINTEXT_LEN) {
-        fprintf(stderr, "Input cannot exceed %d bytes, but was %d\r\n", MAX_PLAINTEXT_LEN, plaintext_len);
+    if (plaintext_len > MAX_PLAINTEXT_LEN || plaintext_len < MIN_PLAINTEXT_LEN) {
+        fprintf(stderr, "Input must be between %d and %d bytes, but was %d\r\n", MIN_PLAINTEXT_LEN, MAX_PLAINTEXT_LEN, plaintext_len);
         return false;
     }
 
@@ -255,8 +255,8 @@ bool rsa_decrypt(unsigned char *ciphertext, int ciphertext_len,
                  unsigned char *key, int key_len,
                  unsigned char *plaintext, int *plaintext_len)
 {
-    if (ciphertext_len > RSA_KEY_SIZE) {
-        fprintf(stderr, "Input cannot exceed %d bytes, but was %d\r\n", RSA_KEY_SIZE, ciphertext_len);
+    if (ciphertext_len != RSA_KEY_SIZE) {
+        fprintf(stderr, "Input must be exactly %d bytes, but was %d\r\n", RSA_KEY_SIZE, ciphertext_len);
         return false;
     }
 

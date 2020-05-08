@@ -33,12 +33,13 @@
 #define IV_MAX_LEN 256      // Arbitrary max
 
 
-#define RSA_KEY_SIZE 128   // Assuming 2048 bit keys
+#define RSA_KEY_SIZE 256   // Assuming 2048 bit keys
 
 // Padding of RSA_PKCS1_OAEP_PADDING is recommended, per:
 // https://www.openssl.org/docs/manmaster/man3/RSA_public_encrypt.html
 // plaintext_len can't exceed RSA_size(rsa) - 42 for RSA_PKCS1_OAEP_PADDING
 #define MAX_PLAINTEXT_LEN (RSA_KEY_SIZE - 42)
+#define MIN_PLAINTEXT_LEN 1
 
 // Calculate the maximum encrypted array length that we can expect
 #define ENCRYPTED_ARRAY_LEN(data_len) (AES_BLOCK_SIZE + data_len)
