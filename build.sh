@@ -4,6 +4,7 @@ set -e
 export JAVA_HOME=$(/usr/libexec/java_home)
 
 # Clean up all previous output
+rm CMakeCache.txt
 rm -rf out/
 
 # Create the JNI header file

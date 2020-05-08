@@ -2,6 +2,7 @@
 # and include sub-projects here.
 #
 cmake_minimum_required (VERSION 3.8)
+project("linkja-crypto")
 
 find_package(Java REQUIRED)
 set(JAVA_AWT_LIBRARY NotNeeded)
