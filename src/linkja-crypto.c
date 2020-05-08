@@ -193,8 +193,8 @@ bool rsa_encrypt(unsigned char *plaintext, int plaintext_len,
                  unsigned char *ciphertext, int* ciphertext_len)
 {
 
-    if (plaintext_len > MAX_PLAINTEXT_LEN) {
-        fprintf(stderr, "Input cannot exceed %d bytes, but was %d\r\n", MAX_PLAINTEXT_LEN, plaintext_len);
+    if (plaintext_len > MAX_PLAINTEXT_LEN || plaintext_len < MIN_PLAINTEXT_LEN) {
+        fprintf(stderr, "Input must be between %d and %d bytes, but was %d\r\n", MIN_PLAINTEXT_LEN, MAX_PLAINTEXT_LEN, plaintext_len);
         return false;
     }
 
@@ -255,8 +255,8 @@ bool rsa_decrypt(unsigned char *ciphertext, int ciphertext_len,
                  unsigned char *key, int key_len,
                  unsigned char *plaintext, int *plaintext_len)
 {
-    if (ciphertext_len > RSA_KEY_SIZE) {
-        fprintf(stderr, "Input cannot exceed %d bytes, but was %d\r\n", RSA_KEY_SIZE, ciphertext_len);
+    if (ciphertext_len != RSA_KEY_SIZE) {
+        fprintf(stderr, "Input must be exactly %d bytes, but was %d\r\n", RSA_KEY_SIZE, ciphertext_len);
         return false;
     }
 
@@ -656,7 +656,7 @@ JNIEXPORT jstring JNICALL Java_org_linkja_crypto_Library_hash
     return (*env)->NewStringUTF(env, "");
   }
 
-  char output[HASH_STRING_OUTPUT_BUFFER_LEN];
+  char output[HASH_STRING_OUTPUT_BUFFER_LEN + 1];
   bytes_to_hex_string(hash, HASH_OUTPUT_BUFFER_LEN, output, HASH_STRING_OUTPUT_BUFFER_LEN);
   return (*env)->NewStringUTF(env, output);
 }
@@ -687,7 +687,7 @@ JNIEXPORT jstring JNICALL Java_org_linkja_crypto_Library_createSecureHash
     final_hash[index] = hash1[index] ^ supplemental_hash[index];
   }
 
-  char output[HASH_STRING_OUTPUT_BUFFER_LEN];
+  char output[HASH_STRING_OUTPUT_BUFFER_LEN + 1];
   bytes_to_hex_string(final_hash, HASH_OUTPUT_BUFFER_LEN, output, HASH_STRING_OUTPUT_BUFFER_LEN);
   return (*env)->NewStringUTF(env, output);
 }
@@ -723,7 +723,7 @@ JNIEXPORT jstring JNICALL Java_org_linkja_crypto_Library_revertSecureHash
     original_hash[index] = input_hash[index] ^ supplemental_hash[index];
   }
 
-  char output[HASH_STRING_OUTPUT_BUFFER_LEN];
+  char output[HASH_STRING_OUTPUT_BUFFER_LEN + 1];
   bytes_to_hex_string(original_hash, HASH_OUTPUT_BUFFER_LEN, output, HASH_STRING_OUTPUT_BUFFER_LEN);
   return (*env)->NewStringUTF(env, output);
 }

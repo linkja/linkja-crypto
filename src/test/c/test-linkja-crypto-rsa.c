@@ -14,7 +14,7 @@ static unsigned char* read_pem_key(char *file_name, size_t *file_len) {
     if (fp == NULL) {
         return NULL;
     }
-    
+
     fseek(fp, 0, SEEK_END);
     *file_len = ftell(fp);
     fseek(fp, 0, SEEK_SET);
@@ -58,6 +58,13 @@ static void test_rsa_encrypt_no_data(void **state) {
                     public_key, file_len,
                     ciphertext, &cipher_len));
 
+    // All set - plaintext too short
+    file_len = 0;
+    public_key = read_pem_key("public-test.key", &file_len);
+    assert_false(rsa_encrypt(plaintext, MIN_PLAINTEXT_LEN - 5,
+                    public_key, file_len,
+                    ciphertext, &cipher_len));
+
     // All set - plaintext too long
     file_len = 0;
     public_key = read_pem_key("public-test.key", &file_len);
@@ -95,6 +102,13 @@ static void test_rsa_decrypt_no_data(void **state) {
     size_t file_len = 0;
     unsigned char *private_key = read_pem_key("invalid-private-test.key", &file_len);
     assert_false(rsa_decrypt(ciphertext, strlen ((char *)ciphertext),
+                    private_key, file_len,
+                    plaintext, &plain_len));
+
+    // All set - ciphertext too short
+    file_len = 0;
+    private_key = read_pem_key("private-test.key", &file_len);
+    assert_false(rsa_decrypt(ciphertext, MIN_PLAINTEXT_LEN - 5,
                     private_key, file_len,
                     plaintext, &plain_len));
 
