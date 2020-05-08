@@ -460,8 +460,9 @@ bool generate_token(unsigned int length, char output[])
   unsigned int output_len = ((length * 2) + 1);
   memset(output, 0, output_len);
 
-  unsigned char token[length];
-  int result = RAND_priv_bytes(token, length);
+  unsigned char* token = malloc(length);
+  //int result = RAND_priv_bytes(token, length);
+  int result = RAND_bytes(token, length);
   if (result != 1) {
     return false;
   }
@@ -487,7 +488,8 @@ bool generate_bytes(unsigned int length, unsigned char output[])
 {
     memset(output, 0, length);
 
-    int result = RAND_priv_bytes(output, length);
+    //int result = RAND_priv_bytes(output, length);
+    int result = RAND_bytes(output, length);
     if (result != 1) {
       return false;
     }
@@ -605,7 +607,7 @@ JNIEXPORT jstring JNICALL Java_org_linkja_crypto_Library_generateToken
     return (*env)->NewStringUTF(env, "");
   }
 
-  char output[(length * 2) + 1];
+  char* output = malloc((length * 2) + 1);
   generate_token(length, output);
   return (*env)->NewStringUTF(env, output);
 }
@@ -619,7 +621,7 @@ JNIEXPORT jbyteArray JNICALL Java_org_linkja_crypto_Library_generateKey
     return NULL;
   }
 
-  unsigned char output[length];
+  unsigned char* output = malloc(length);
   generate_key(length, output);
   jbyteArray key = (*env)->NewByteArray(env, length);
   (*env)->SetByteArrayRegion(env, key, 0, length, (jbyte*)output);
@@ -635,7 +637,7 @@ JNIEXPORT jbyteArray JNICALL Java_org_linkja_crypto_Library_generateIV
     return NULL;
   }
 
-  unsigned char output[length];
+  unsigned char* output = malloc(length);
   generate_iv(length, output);
   jbyteArray key = (*env)->NewByteArray(env, length);
   (*env)->SetByteArrayRegion(env, key, 0, length, (jbyte*)output);
@@ -711,7 +713,7 @@ JNIEXPORT jstring JNICALL Java_org_linkja_crypto_Library_revertSecureHash
   jsize input_len = (*env)->GetStringUTFLength(env, input);
   // The output array size is half the hex_str length (rounded up)
   int input_hash_len = (input_len+1)/2;
-  unsigned char input_hash[input_hash_len];
+  unsigned char* input_hash = malloc(input_hash_len);
   bool result = hex_string_to_bytes(input_str, (int)input_len, input_hash, input_hash_len);
   (*env)->ReleaseStringUTFChars(env, input, input_str);
   if (!result) {
@@ -773,7 +775,7 @@ jobject aesEncryptDecrypt
     }
 
     int output_array_max_len = (encrypt ? ENCRYPTED_ARRAY_LEN(data_array_len) : data_array_len);
-    unsigned char output_array[output_array_max_len];
+    unsigned char* output_array = malloc(output_array_max_len);
     int output_array_len = 0;  // Actual length
     bool result = false;
     if (encrypt) {

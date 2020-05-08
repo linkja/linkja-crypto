@@ -54,6 +54,7 @@ _deps
 
 # Shared objects (inc. Windows DLLs)
 *.dll
+*.dll.manifest
 *.so
 *.so.*
 *.dylib

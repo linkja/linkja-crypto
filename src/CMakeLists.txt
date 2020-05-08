@@ -43,29 +43,42 @@ endif()
 
 # Link in openssl
 add_library(openssl STATIC IMPORTED) # or STATIC instead of SHARED
+add_library(libssl STATIC IMPORTED) # or STATIC instead of SHARED
 
-#if(APPLE)
-#	set_target_properties(openssl PROPERTIES
-#		IMPORTED_LOCATION "${CMAKE_SOURCE_DIR}/lib/openssl/macos/libcrypto.a"
-#		INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/lib/openssl/include"
-#	)
-#endif()
+if(APPLE)
+	set_target_properties(openssl PROPERTIES
+		IMPORTED_LOCATION "${CMAKE_SOURCE_DIR}/lib/openssl/macos/libcrypto.a"
+		INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/lib/openssl/include"
+	)
+elseif(WIN32)
+	set_target_properties(openssl PROPERTIES
+		IMPORTED_LOCATION "${CMAKE_SOURCE_DIR}/lib/openssl/windows/libcrypto.lib"
+		INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/lib/openssl/include"
+	)
+	set_target_properties(libssl PROPERTIES
+		IMPORTED_LOCATION "${CMAKE_SOURCE_DIR}/lib/openssl/windows/libssl.lib"
+		INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/lib/openssl/include"
+	)
+endif()
 
-
-set_target_properties(openssl PROPERTIES
-	IMPORTED_IMPLIB "${CMAKE_SOURCE_DIR}/lib/openssl/windows/libcrypto.a"
-	IMPORTED_LOCATION "${CMAKE_SOURCE_DIR}/lib/openssl/windows/libcrypto-1_1-x64.dll"
-	INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/lib/openssl/include"
-)
 
 # Specify the .c file that creates our shared library
 add_library(linkjacrypto SHARED "linkja-crypto.c")
 
 # Add some additional compiler options for strict warning checks.
-target_compile_options(linkjacrypto PRIVATE -Wall -Wextra -Wpedantic -Werror)
+if(UNIX OR APPLE)
+    target_compile_options(linkjacrypto PRIVATE -Wall -Wextra -Wpedantic -Werror)
+elseif(WIN32)
+    target_compile_options(linkjacrypto PRIVATE -Wall)
+endif()
 
 # Add the dependency to link to the openssl library
-target_link_libraries(linkjacrypto openssl)
+if (APPLE)
+	target_link_libraries(linkjacrypto openssl)
+elseif(WIN32)
+	target_link_libraries(linkjacrypto crypt32 ws2_32 libssl openssl)
+endif()
+
 
 # Specify the directory where we want our final library written
 set_target_properties(linkjacrypto
