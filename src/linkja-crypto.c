@@ -4,7 +4,9 @@
 
 #include "linkja-crypto.h"
 #include "include/org_linkja_crypto_Library.h"
+#ifdef INCLUDE_SECRETS
 #include "include/linkja_secret.h"
+#endif
 
 #include <openssl/err.h>
 #include <openssl/rsa.h>
@@ -537,6 +539,7 @@ bool generate_iv(unsigned int length, unsigned char output[])
   return generate_bytes(length, output);
 }
 
+#ifdef INCLUDE_SECRETS
 /*
   hash_supplemental_data - given a row identifier ('row_id_str') and token identifier
   ('token_id_str'), create a hash comprised of those values and the project-specific
@@ -597,6 +600,7 @@ bool generate_supplemental_hash(JNIEnv *env, jstring rowId, jstring tokenId, uns
 
   return supplemental_created;
 }
+#endif
 
 JNIEXPORT jstring JNICALL Java_org_linkja_crypto_Library_generateToken
   (JNIEnv *env, jclass obj, jint length)
@@ -663,6 +667,7 @@ JNIEXPORT jstring JNICALL Java_org_linkja_crypto_Library_hash
   return (*env)->NewStringUTF(env, output);
 }
 
+#ifdef INCLUDE_SECRETS
 JNIEXPORT jstring JNICALL Java_org_linkja_crypto_Library_createSecureHash
   (JNIEnv *env, jclass obj, jstring input, jstring rowId, jstring tokenId)
 {
@@ -729,6 +734,7 @@ JNIEXPORT jstring JNICALL Java_org_linkja_crypto_Library_revertSecureHash
   bytes_to_hex_string(original_hash, HASH_OUTPUT_BUFFER_LEN, output, HASH_STRING_OUTPUT_BUFFER_LEN);
   return (*env)->NewStringUTF(env, output);
 }
+#endif
 
 jobject aesEncryptDecrypt
   (JNIEnv *env, jbyteArray data, jbyteArray aad, jbyteArray key, jbyteArray iv, jbyteArray tag, bool encrypt)
@@ -946,6 +952,9 @@ JNIEXPORT jstring JNICALL Java_org_linkja_crypto_Library_getLibrarySignature
    (JNIEnv *env, jobject obj)
 {
   (void)obj;  // Avoid warning about unused parameters.
-
+#ifdef INCLUDE_SECRETS
   return (*env)->NewStringUTF(env, LINKJA_SECRET_HASH);
+#else
+  return (*env)->NewStringUTF(env, "(Secret hash not included)");
+#endif
 }

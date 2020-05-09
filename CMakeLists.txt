@@ -4,6 +4,16 @@
 cmake_minimum_required (VERSION 3.8)
 project("linkja-crypto")
 
+option(INCLUDE_SECRETS "Include the hashing secrets in the library" ON)
+
+if(INCLUDE_SECRETS)
+  add_definitions(-DINCLUDE_SECRETS)
+  message(STATUS "INCLUDE_SECRETS")
+else()
+  add_definitions(-DEXCLUDE_SECRETS)
+  message(STATUS "EXCLUDE_SECRETS")
+endif()
+
 find_package(Java REQUIRED)
 set(JAVA_AWT_LIBRARY NotNeeded)
 set(JAVA_JVM_LIBRARY NotNeeded)

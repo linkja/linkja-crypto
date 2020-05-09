@@ -17,11 +17,15 @@ SET(SOURCES
 	test-linkja-crypto-token.c
 )
 ADD_EXECUTABLE(test-linkja-crypto-token ${SOURCES})
+
+if(INCLUDE_SECRETS)
 SET(SOURCES
 	../../linkja-crypto.c
 	test-linkja-crypto-hash-supplemental-data.c
 )
 ADD_EXECUTABLE(test-linkja-crypto-hash-supplemental-data ${SOURCES})
+endif()
+
 SET(SOURCES
 	../../linkja-crypto.c
 	test-linkja-crypto-conversions.c
@@ -42,7 +46,9 @@ FIND_PACKAGE(CMOCKA REQUIRED)
 INCLUDE_DIRECTORIES(${LIBCMOCKA_INCLUDE_DIR})
 TARGET_LINK_LIBRARIES(test-linkja-crypto-hash ${LIBCMOCKA_LIBRARIES})
 TARGET_LINK_LIBRARIES(test-linkja-crypto-token ${LIBCMOCKA_LIBRARIES})
+if(INCLUDE_SECRETS)
 TARGET_LINK_LIBRARIES(test-linkja-crypto-hash-supplemental-data ${LIBCMOCKA_LIBRARIES})
+endif()
 TARGET_LINK_LIBRARIES(test-linkja-crypto-conversions ${LIBCMOCKA_LIBRARIES})
 TARGET_LINK_LIBRARIES(test-linkja-crypto-aes ${LIBCMOCKA_LIBRARIES})
 TARGET_LINK_LIBRARIES(test-linkja-crypto-rsa ${LIBCMOCKA_LIBRARIES})
@@ -52,8 +58,10 @@ INSTALL(TARGETS test-linkja-crypto-hash RUNTIME DESTINATION out)
 add_test(test-linkja-crypto-hash ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/test-linkja-crypto-hash)
 INSTALL(TARGETS test-linkja-crypto-token RUNTIME DESTINATION out)
 add_test(test-linkja-crypto-token ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/test-linkja-crypto-token)
+if(INCLUDE_SECRETS)
 INSTALL(TARGETS test-linkja-crypto-hash-supplemental-data RUNTIME DESTINATION out)
 add_test(test-linkja-crypto-hash-supplemental-data ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/test-linkja-crypto-hash-supplemental-data)
+endif()
 INSTALL(TARGETS test-linkja-crypto-conversions RUNTIME DESTINATION out)
 add_test(test-linkja-crypto-conversions ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/test-linkja-crypto-conversions)
 INSTALL(TARGETS test-linkja-crypto-aes RUNTIME DESTINATION out)
@@ -72,7 +80,9 @@ set_target_properties(openssl PROPERTIES
 # Add the dependency to link to the openssl library
 target_link_libraries(test-linkja-crypto-hash openssl)
 target_link_libraries(test-linkja-crypto-token openssl)
+if(INCLUDE_SECRETS)
 target_link_libraries(test-linkja-crypto-hash-supplemental-data openssl)
+endif()
 target_link_libraries(test-linkja-crypto-conversions openssl)
 target_link_libraries(test-linkja-crypto-aes openssl)
 target_link_libraries(test-linkja-crypto-rsa openssl)

@@ -81,6 +81,8 @@ bool generate_key(unsigned int length, unsigned char output[]);
 
 bool generate_iv(unsigned int length, unsigned char output[]);
 
+#ifdef INCLUDE_SECRETS
 bool hash_supplemental_data(const char *row_id_str, jsize row_id_len, const char *token_id_str, jsize token_id_len, unsigned char output[]);
+#endif
 
 #endif

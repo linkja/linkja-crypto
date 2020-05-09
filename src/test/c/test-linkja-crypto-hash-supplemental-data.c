@@ -1,3 +1,5 @@
+#ifdef INCLUDE_SECRETS
+
 #include <stdarg.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -54,3 +56,5 @@ int main(void) {
 
 	return cmocka_run_group_tests(tests, NULL, NULL);
 }
+
+#endif
