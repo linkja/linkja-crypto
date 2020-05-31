@@ -6,7 +6,7 @@
 
     <groupId>org.linkja</groupId>
     <artifactId>linkja-crypto</artifactId>
-    <version>0.4.1</version>
+    <version>0.5.0</version>
 
     <name>${project.groupId}:${project.artifactId}</name>
     <description>Shared crypto Java library across linkja projects.</description>
