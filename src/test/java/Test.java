@@ -67,7 +67,8 @@ public class Test {
     }
 
     // CREATESECUREHASH
-    final String TEST_SESSION_KEY = "abcdabcdabcdabcdabcdabcdabcdabcd";
+    final byte[] TEST_SESSION_KEY = { 0x01, 0x02, 0x03, 0x04, 0x05, 0x04, 0x03, 0x02, 0x01 };
+    final byte[] TEST_ALTERNATE_SESSION_KEY = { 0x02, 0x02, 0x03, 0x04, 0x05, 0x04, 0x03, 0x02, 0x01 };
     final String TEST_TOKEN_STRING = "8ba490e699fc3d12db277445def2cae8ecd3f23c04c3344b63781bf9e5804f22";
     final String ROW_ID = "1001";
     final String TOKEN_ID = "testToken1";
@@ -91,7 +92,7 @@ public class Test {
     }
 
     // The secure hash should produce a different hash with a different session key
-    String secureHash3 = library.createSecureHash(TEST_TOKEN_STRING, "1bcdabcdabcdabcdabcdabcdabcdabcd", ROW_ID, TOKEN_ID);
+    String secureHash3 = library.createSecureHash(TEST_TOKEN_STRING, TEST_ALTERNATE_SESSION_KEY, ROW_ID, TOKEN_ID);
     // The secure hash is considered valid if it matches the previous result
     if (secureHash.equals(secureHash3)) {
       System.out.println("**ERROR : createSecureHash returned the same string given different session keys");

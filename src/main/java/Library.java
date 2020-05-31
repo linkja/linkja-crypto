@@ -12,11 +12,11 @@ public class Library {
     // Generate a string representing the hex characters of a hash given the
     // input string, a session key, and further mixed with the row ID and an
     // ID for the token we are creating.
-    public static native String createSecureHash(String input, String sessionKey, String rowId, String tokenId);
+    public static native String createSecureHash(String input, byte[] sessionKey, String rowId, String tokenId);
 
     // Generate a string representing the hex characters of the true hash of a
     // token, given the session key, the row ID, and an ID for the token we want.
-    public static native String revertSecureHash(String input, String sessionKey, String rowId, String tokenId);
+    public static native String revertSecureHash(String input, byte[] sessionKey, String rowId, String tokenId);
 
     // Generate a random token of the specified length.  The resulting String
     // will be the hex characters representing the random token (meaning it will

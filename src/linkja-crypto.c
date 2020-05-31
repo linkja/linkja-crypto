@@ -606,7 +606,7 @@ bool generate_input_hash(JNIEnv *env, jstring input, unsigned char input_hash[])
 
   Returns: true if successful, false otherwise
 */
-bool hash_supplemental_data(const char *session_key_str, jsize session_key_len,
+bool hash_supplemental_data(const unsigned char *session_key_data, jsize session_key_len,
   const char *row_id_str, jsize row_id_len,
   const char *token_id_str, jsize token_id_len,
   unsigned char output[])
@@ -619,7 +619,7 @@ bool hash_supplemental_data(const char *session_key_str, jsize session_key_len,
     return false;
   } else if (!token_id_str || token_id_len <= 0) {
     return false;
-  } else if (!session_key_str || session_key_len <= 0) {
+  } else if (!session_key_data || session_key_len <= 0) {
     return false;
   }
 
@@ -632,7 +632,7 @@ bool hash_supplemental_data(const char *session_key_str, jsize session_key_len,
   }
   memset(supplemental, 0, supplemental_len);
 
-  memcpy(supplemental, session_key_str, session_key_len);
+  memcpy(supplemental, session_key_data, session_key_len);
   memcpy(supplemental+session_key_len, row_id_str, row_id_len);
   memcpy(supplemental+row_id_len+session_key_len, token_id_str, token_id_len);
 
@@ -650,16 +650,17 @@ bool hash_supplemental_data(const char *session_key_str, jsize session_key_len,
 
   Returns: true if successful, false otherwise
 */
-bool generate_supplemental_hash(JNIEnv *env, jstring sessionKey, jstring rowId, jstring tokenId, unsigned char supplemental_hash[])
+bool generate_supplemental_hash(JNIEnv *env, jbyteArray sessionKey, jstring rowId, jstring tokenId, unsigned char supplemental_hash[])
 {
-  jsize session_key_len = (*env)->GetStringUTFLength(env, sessionKey);
-  const char *session_key_str = (*env)->GetStringUTFChars(env, sessionKey, 0);
+  jsize session_key_len = (*env)->GetArrayLength(env, sessionKey);
+  jbyte* session_key_data = (*env)->GetByteArrayElements(env, sessionKey, NULL);
   jsize row_id_len = (*env)->GetStringUTFLength(env, rowId);
   const char *row_id_str = (*env)->GetStringUTFChars(env, rowId, 0);
   jsize token_id_len = (*env)->GetStringUTFLength(env, tokenId);
   const char *token_id_str = (*env)->GetStringUTFChars(env, tokenId, 0);
-  bool supplemental_created = hash_supplemental_data(session_key_str, session_key_len, row_id_str, row_id_len, token_id_str, token_id_len, supplemental_hash);
-  (*env)->ReleaseStringUTFChars(env, sessionKey, session_key_str);
+  bool supplemental_created = hash_supplemental_data((unsigned char *)session_key_data, session_key_len,
+    row_id_str, row_id_len, token_id_str, token_id_len, supplemental_hash);
+  (*env)->ReleaseByteArrayElements(env, sessionKey, session_key_data, 0);
   (*env)->ReleaseStringUTFChars(env, rowId, row_id_str);
   (*env)->ReleaseStringUTFChars(env, tokenId, token_id_str);
 
@@ -748,7 +749,7 @@ JNIEXPORT jstring JNICALL Java_org_linkja_crypto_Library_hash
 
 #ifdef INCLUDE_SECRETS
 JNIEXPORT jstring JNICALL Java_org_linkja_crypto_Library_createSecureHash
-  (JNIEnv *env, jclass obj, jstring input, jstring sessionKey, jstring rowId, jstring tokenId)
+  (JNIEnv *env, jclass obj, jstring input, jbyteArray sessionKey, jstring rowId, jstring tokenId)
 {
   (void)obj;  // Avoid warning about unused parameters.
 
@@ -781,7 +782,7 @@ JNIEXPORT jstring JNICALL Java_org_linkja_crypto_Library_createSecureHash
 #endif
 
 JNIEXPORT jstring JNICALL Java_org_linkja_crypto_Library_revertSecureHash
-  (JNIEnv *env, jclass obj, jstring input, jstring sessionKey, jstring rowId, jstring tokenId)
+  (JNIEnv *env, jclass obj, jstring input, jbyteArray sessionKey, jstring rowId, jstring tokenId)
 {
   (void)obj;  // Avoid warning about unused parameters.
 
