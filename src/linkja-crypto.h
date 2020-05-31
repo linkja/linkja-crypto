@@ -6,10 +6,10 @@
 #include <jni.h>
 
 // Define the length of the hash byte array used for function output
-#define HASH_OUTPUT_BUFFER_LEN SHA512_DIGEST_LENGTH
+#define HASH_OUTPUT_BUFFER_LEN SHA256_DIGEST_LENGTH
 
 // Define the length of the hex string character array used for function output
-#define HASH_STRING_OUTPUT_BUFFER_LEN ((SHA512_DIGEST_LENGTH * 2) + 1)
+#define HASH_STRING_OUTPUT_BUFFER_LEN ((SHA256_DIGEST_LENGTH * 2) + 1)
 
 // The minimum and maximum lengths allowed for generating random tokens.
 // Note that these are the sizes of the byte array.
@@ -71,18 +71,23 @@ bool bytes_to_hex_string(unsigned char* input, unsigned int input_len, char outp
 
 bool hex_string_to_bytes(const char input[], unsigned int input_len, unsigned char* output, unsigned int output_len);
 
-bool hash_string(const char *string, unsigned char output[]);
-
-bool hash_data(const unsigned char *data, size_t data_len, unsigned char output[]);
-
 bool generate_token(unsigned int length, char output[]);
 
 bool generate_key(unsigned int length, unsigned char output[]);
 
 bool generate_iv(unsigned int length, unsigned char output[]);
 
+bool hash_string(const char *string, unsigned char output[]);
+
+bool hash_data(const unsigned char *data, size_t data_len, unsigned char output[]);
+
+bool hash_supplemental_data(const char *session_key_str, jsize session_key_len,
+                            const char *row_id_str, jsize row_id_len,
+                            const char *token_id_str, jsize token_id_len,
+                            unsigned char output[]);
+
 #ifdef INCLUDE_SECRETS
-bool hash_supplemental_data(const char *row_id_str, jsize row_id_len, const char *token_id_str, jsize token_id_len, unsigned char output[]);
+bool hash_input_data(const char *input_str, jsize input_str_len, unsigned char output[]);
 #endif
 
 #endif

@@ -25,7 +25,7 @@ public class Test {
     // HASH
     String input = "linkja";
     String hash = library.hash(input);
-    if (hash.equals("d9a759a5b2b67c17ac8dcaf239b97fae8535c297b6775ba0e2e338f5879982b4950825387ecfb4c56b11bd23109dcf599fb43f0ba4de47bde820752095220fdb")) {
+    if (hash.equals("af9a61307755e0530561406b5b780c5777e82d8208ff55aa241d34ded49858d8")) {
       System.out.println("OK - hash");
     }
     else {
@@ -67,10 +67,11 @@ public class Test {
     }
 
     // CREATESECUREHASH
+    final String TEST_SESSION_KEY = "abcdabcdabcdabcdabcdabcdabcdabcd";
     final String TEST_TOKEN_STRING = "8ba490e699fc3d12db277445def2cae8ecd3f23c04c3344b63781bf9e5804f22";
     final String ROW_ID = "1001";
     final String TOKEN_ID = "testToken1";
-    String secureHash = library.createSecureHash(TEST_TOKEN_STRING, ROW_ID, TOKEN_ID);
+    String secureHash = library.createSecureHash(TEST_TOKEN_STRING, TEST_SESSION_KEY, ROW_ID, TOKEN_ID);
     // The secure hash is considered valid if it is not a null or empty string
     if (secureHash == null || secureHash.equals("")) {
       System.out.println("**ERROR : createSecureHash returned empty string");
@@ -79,9 +80,31 @@ public class Test {
       System.out.println("OK - createSecureHash");
     }
 
+    // The secure hash should replicate with the same input
+    String secureHash2 = library.createSecureHash(TEST_TOKEN_STRING, TEST_SESSION_KEY, ROW_ID, TOKEN_ID);
+    // The secure hash is considered valid if it matches the previous result
+    if (!secureHash.equals(secureHash2)) {
+      System.out.println("**ERROR : createSecureHash returned a different string with the same input");
+    }
+    else {
+      System.out.println("OK - createSecureHash (replicate)");
+    }
+
+    // The secure hash should produce a different hash with a different session key
+    String secureHash3 = library.createSecureHash(TEST_TOKEN_STRING, "1bcdabcdabcdabcdabcdabcdabcdabcd", ROW_ID, TOKEN_ID);
+    // The secure hash is considered valid if it matches the previous result
+    if (secureHash.equals(secureHash3)) {
+      System.out.println("**ERROR : createSecureHash returned the same string given different session keys");
+    }
+    else {
+      System.out.println("OK - createSecureHash (session key)");
+    }
+
     // REVERTSECUREHASH
-    String originalHash = library.revertSecureHash(secureHash, ROW_ID, TOKEN_ID);
-    if (originalHash.equals(library.hash(TEST_TOKEN_STRING))) {
+    String originalHash = library.revertSecureHash(secureHash, TEST_SESSION_KEY, ROW_ID, TOKEN_ID);
+    // Reverting the secure hash should NOT produce the original input.  It should be different because the
+    // crypto library has introduced a shared secret to mask the original input from the matcher.
+    if (!originalHash.equals(library.hash(TEST_TOKEN_STRING))) {
       System.out.println("OK - revertSecureHash");
     }
     else {

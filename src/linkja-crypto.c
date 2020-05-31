@@ -392,57 +392,6 @@ bool hex_string_to_bytes(const char input[], unsigned int input_len, unsigned ch
 }
 
 /*
-  hash_string - given an input character array ('string'), calculate the SHA512
-  hash and return a character array ('output') that contains the hexadecimal
-  representation of the hash.
-
-  Returns: true if successful, false otherwise
-
-  This method assumes that 'output' is HASH_OUTPUT_BUFFER_LEN characters in length
-
-  e.g. string -> "test"
-       output -> ee26b0dd4af7e749aa1a8ee3c10ae9923f618980772e473f8819a5d4940e0db27ac185f8a0e1d5f84f88bc887fd67b143732c304cc5fa9ad8e6f57f50028a8ff
-*/
-bool hash_string(const char *string, unsigned char output[HASH_OUTPUT_BUFFER_LEN])
-{
-  if (string == NULL) {
-    memset(output, 0, HASH_OUTPUT_BUFFER_LEN);
-    return false;
-  }
-
-  return hash_data((unsigned char*)string, strlen(string), output);
-}
-
-/*
-  hash_data - given an input byte array ('data'), calculate the SHA512
-  hash and return a byte array ('output') that contains the hash.
-
-  Returns: true if successful, false otherwise
-
-  This method assumes that 'output' is HASH_OUTPUT_BUFFER_LEN characters in length
-
-  e.g. data -> 313233346861736831961E45165B002C23DEC32F60828D5AE37C2ADCB11990B69BA847851E71A0A989
-       output -> b5499df2a587a3a91390f6f7c632318fbb8078e0907924d2edbdfc3f408ab2c45f5f84ff4dba3dba775c0a475c8429e743eec3c3a44be8f6690535a5533921a5
-*/
-bool hash_data(const unsigned char *data, size_t data_len, unsigned char output[HASH_OUTPUT_BUFFER_LEN])
-{
-  memset(output, 0, HASH_OUTPUT_BUFFER_LEN);
-
-  // Note that we are allowing data where the length is 0.  Just like with an empty
-  // string, we can generate a hash from that, so we need to allow that to be
-  // processed.
-  if (data == NULL) { // || data_len < 0) {
-    return false;
-  }
-
-  SHA512_CTX sha256;
-  SHA512_Init(&sha256);
-  SHA512_Update(&sha256, data, data_len);
-  SHA512_Final(output, &sha256);
-  return true;
-}
-
-/*
   generate_token - generate a random array of 'length' bytes, and return a character
   array ('output') that contains the hexadecimal representation of the token.
 
@@ -463,13 +412,15 @@ bool generate_token(unsigned int length, char output[])
   memset(output, 0, output_len);
 
   unsigned char* token = malloc(length);
-  //int result = RAND_priv_bytes(token, length);
-  int result = RAND_bytes(token, length);
+  int result = RAND_priv_bytes(token, length);
   if (result != 1) {
+    free(token);
     return false;
   }
 
-  return bytes_to_hex_string(token, length, output, output_len);
+  bool success = bytes_to_hex_string(token, length, output, output_len);
+  free(token);
+  return success;
 }
 
 /*
@@ -539,15 +490,126 @@ bool generate_iv(unsigned int length, unsigned char output[])
   return generate_bytes(length, output);
 }
 
+/*
+  hash_string - given an input character array ('string'), calculate the SHA256
+  hash and return a character array ('output') that contains the hexadecimal
+  representation of the hash.
+
+  Returns: true if successful, false otherwise
+
+  This method assumes that 'output' is HASH_OUTPUT_BUFFER_LEN characters in length
+
+  e.g. string -> "test"
+       output -> ee26b0dd4af7e749aa1a8ee3c10ae9923f618980772e473f8819a5d4940e0db27ac185f8a0e1d5f84f88bc887fd67b143732c304cc5fa9ad8e6f57f50028a8ff
+*/
+bool hash_string(const char *string, unsigned char output[HASH_OUTPUT_BUFFER_LEN])
+{
+  if (string == NULL) {
+    memset(output, 0, HASH_OUTPUT_BUFFER_LEN);
+    return false;
+  }
+
+  return hash_data((unsigned char*)string, strlen(string), output);
+}
+
+/*
+  hash_data - given an input byte array ('data'), calculate the SHA256
+  hash and return a byte array ('output') that contains the hash.
+
+  Returns: true if successful, false otherwise
+
+  This method assumes that 'output' is HASH_OUTPUT_BUFFER_LEN characters in length
+
+  e.g. data -> 313233346861736831961E45165B002C23DEC32F60828D5AE37C2ADCB11990B69BA847851E71A0A989
+       output -> b5499df2a587a3a91390f6f7c632318fbb8078e0907924d2edbdfc3f408ab2c45f5f84ff4dba3dba775c0a475c8429e743eec3c3a44be8f6690535a5533921a5
+*/
+bool hash_data(const unsigned char *data, size_t data_len, unsigned char output[HASH_OUTPUT_BUFFER_LEN])
+{
+  memset(output, 0, HASH_OUTPUT_BUFFER_LEN);
+
+  // Note that we are allowing data where the length is 0.  Just like with an empty
+  // string, we can generate a hash from that, so we need to allow that to be
+  // processed.
+  if (data == NULL) { // || data_len < 0) {
+    return false;
+  }
+
+  SHA256_CTX sha256;
+  SHA256_Init(&sha256);
+  SHA256_Update(&sha256, data, data_len);
+  SHA256_Final(output, &sha256);
+  return true;
+}
+
 #ifdef INCLUDE_SECRETS
 /*
-  hash_supplemental_data - given a row identifier ('row_id_str') and token identifier
-  ('token_id_str'), create a hash comprised of those values and the project-specific
-  secret hash data.  This will return a byte array ('output') that contains the hash.
+  hash_input_data - given input data, prepend it with the project-specific secret.
+  This will return a byte array ('output') that contains the hash.
 
   Returns: true if successful, false otherwise
 */
-bool hash_supplemental_data(const char *row_id_str, jsize row_id_len, const char *token_id_str, jsize token_id_len, unsigned char output[])
+bool hash_input_data(const char *input_str, jsize input_str_len, unsigned char output[])
+{
+  memset(output, 0, HASH_OUTPUT_BUFFER_LEN);
+
+  // If the input string isn't valid (null data or lengths < 0), we are
+  // going to abort and return with an empty response;
+  if (!input_str || input_str_len < 0) {
+    return false;
+  }
+
+  // Note that this is not a string, it's an array of bytes (because that's how
+  // the secret is stored).  Our input data may be a string, but we ignore its
+  // NULL terminator when building our concatenated data array.
+  unsigned char *hash_input = NULL;
+  size_t hash_input_len = LINKJA_SECRET_LEN + input_str_len;
+  if ((hash_input = malloc(hash_input_len)) == NULL) {
+    return false;
+  }
+  memset(hash_input, 0, hash_input_len);
+
+  const unsigned char secret[LINKJA_SECRET_LEN] = LINKJA_SECRET;
+  memcpy(hash_input, secret, LINKJA_SECRET_LEN);
+  memcpy(hash_input+LINKJA_SECRET_LEN, input_str, input_str_len);
+
+  bool result = hash_data(hash_input, hash_input_len, output);
+  free(hash_input);  // Be sure we clean up input string
+  hash_input = NULL;
+
+  return result;
+}
+
+/*
+  This is a JNI-specific wrapper around hash_input_data.  It takes as input the
+  allowed JNI types.  We created this so that hash_input_data can be easier to
+  setup and test for unit testing, without having to construct jstrings.
+
+  Returns: true if successful, false otherwise
+*/
+bool generate_input_hash(JNIEnv *env, jstring input, unsigned char input_hash[])
+{
+  jsize input_len = (*env)->GetStringUTFLength(env, input);
+  const char *input_str = (*env)->GetStringUTFChars(env, input, 0);
+  bool hash_created = hash_input_data(input_str, input_len, input_hash);
+  (*env)->ReleaseStringUTFChars(env, input, input_str);
+
+  return hash_created;
+}
+#endif
+
+
+/*
+  hash_supplemental_data - given a session key ('session_key_str'), a row identifier
+  ('row_id_str') and token identifier ('token_id_str'), create a hash comprised of
+  those values and the project-specific secret hash data.  This will return a byte
+  array ('output') that contains the hash.
+
+  Returns: true if successful, false otherwise
+*/
+bool hash_supplemental_data(const char *session_key_str, jsize session_key_len,
+  const char *row_id_str, jsize row_id_len,
+  const char *token_id_str, jsize token_id_len,
+  unsigned char output[])
 {
   memset(output, 0, HASH_OUTPUT_BUFFER_LEN);
 
@@ -557,22 +619,22 @@ bool hash_supplemental_data(const char *row_id_str, jsize row_id_len, const char
     return false;
   } else if (!token_id_str || token_id_len <= 0) {
     return false;
+  } else if (!session_key_str || session_key_len <= 0) {
+    return false;
   }
 
-  // Note that this is not a string, it's an array of bytes (because that's how
-  // the secret is stored).  Some of the data may be strings, but we ignore
+  // Note that this is not a string, it's an array of bytes. We ignore
   // their NULL terminators when building our concatenated data array.
   unsigned char *supplemental = NULL;
-  size_t supplemental_len = LINKJA_SECRET_LEN + row_id_len + token_id_len;
+  size_t supplemental_len = session_key_len + row_id_len + token_id_len;
   if ((supplemental = malloc(supplemental_len)) == NULL) {
     return false;
   }
   memset(supplemental, 0, supplemental_len);
 
-  memcpy(supplemental, row_id_str, row_id_len);
-  memcpy(supplemental+row_id_len, token_id_str, token_id_len);
-  const unsigned char secret[LINKJA_SECRET_LEN] = LINKJA_SECRET;
-  memcpy(supplemental+row_id_len+token_id_len, secret, LINKJA_SECRET_LEN);
+  memcpy(supplemental, session_key_str, session_key_len);
+  memcpy(supplemental+session_key_len, row_id_str, row_id_len);
+  memcpy(supplemental+row_id_len+session_key_len, token_id_str, token_id_len);
 
   bool result = hash_data(supplemental, supplemental_len, output);
   free(supplemental);  // Be sure we clean up supplemental string
@@ -588,19 +650,21 @@ bool hash_supplemental_data(const char *row_id_str, jsize row_id_len, const char
 
   Returns: true if successful, false otherwise
 */
-bool generate_supplemental_hash(JNIEnv *env, jstring rowId, jstring tokenId, unsigned char supplemental_hash[])
+bool generate_supplemental_hash(JNIEnv *env, jstring sessionKey, jstring rowId, jstring tokenId, unsigned char supplemental_hash[])
 {
+  jsize session_key_len = (*env)->GetStringUTFLength(env, sessionKey);
+  const char *session_key_str = (*env)->GetStringUTFChars(env, sessionKey, 0);
   jsize row_id_len = (*env)->GetStringUTFLength(env, rowId);
   const char *row_id_str = (*env)->GetStringUTFChars(env, rowId, 0);
   jsize token_id_len = (*env)->GetStringUTFLength(env, tokenId);
   const char *token_id_str = (*env)->GetStringUTFChars(env, tokenId, 0);
-  bool supplemental_created = hash_supplemental_data(row_id_str, row_id_len, token_id_str, token_id_len, supplemental_hash);
+  bool supplemental_created = hash_supplemental_data(session_key_str, session_key_len, row_id_str, row_id_len, token_id_str, token_id_len, supplemental_hash);
+  (*env)->ReleaseStringUTFChars(env, sessionKey, session_key_str);
   (*env)->ReleaseStringUTFChars(env, rowId, row_id_str);
   (*env)->ReleaseStringUTFChars(env, tokenId, token_id_str);
 
   return supplemental_created;
 }
-#endif
 
 JNIEXPORT jstring JNICALL Java_org_linkja_crypto_Library_generateToken
   (JNIEnv *env, jclass obj, jint length)
@@ -612,8 +676,14 @@ JNIEXPORT jstring JNICALL Java_org_linkja_crypto_Library_generateToken
   }
 
   char* output = malloc((length * 2) + 1);
+  if (!output) {
+    free(output);
+    return (*env)->NewStringUTF(env, "");
+  }
   generate_token(length, output);
-  return (*env)->NewStringUTF(env, output);
+  jstring result = (*env)->NewStringUTF(env, output);
+  free(output);
+  return result;
 }
 
 JNIEXPORT jbyteArray JNICALL Java_org_linkja_crypto_Library_generateKey
@@ -626,9 +696,14 @@ JNIEXPORT jbyteArray JNICALL Java_org_linkja_crypto_Library_generateKey
   }
 
   unsigned char* output = malloc(length);
+  if (!output) {
+    free(output);
+    return NULL;
+  }
   generate_key(length, output);
   jbyteArray key = (*env)->NewByteArray(env, length);
   (*env)->SetByteArrayRegion(env, key, 0, length, (jbyte*)output);
+  free(output);
   return key;
 }
 
@@ -642,9 +717,13 @@ JNIEXPORT jbyteArray JNICALL Java_org_linkja_crypto_Library_generateIV
   }
 
   unsigned char* output = malloc(length);
+  if (!output) {
+    return NULL;
+  }
   generate_iv(length, output);
   jbyteArray key = (*env)->NewByteArray(env, length);
   (*env)->SetByteArrayRegion(env, key, 0, length, (jbyte*)output);
+  free(output);
   return key;
 }
 
@@ -669,45 +748,47 @@ JNIEXPORT jstring JNICALL Java_org_linkja_crypto_Library_hash
 
 #ifdef INCLUDE_SECRETS
 JNIEXPORT jstring JNICALL Java_org_linkja_crypto_Library_createSecureHash
-  (JNIEnv *env, jclass obj, jstring input, jstring rowId, jstring tokenId)
+  (JNIEnv *env, jclass obj, jstring input, jstring sessionKey, jstring rowId, jstring tokenId)
 {
   (void)obj;  // Avoid warning about unused parameters.
 
-  // Generate the hash token for the real data
-  unsigned char hash1[HASH_OUTPUT_BUFFER_LEN];
+  // Generate the hash token for the real data.  This is a concatenation of the secret value
+  // and the input string.
+  unsigned char input_hash[HASH_OUTPUT_BUFFER_LEN];
   const char *input_str = (*env)->GetStringUTFChars(env, input, 0);
-  bool hash1_result = hash_string(input_str, hash1);
+  bool input_hash_result = generate_input_hash(env, input, input_hash);
   (*env)->ReleaseStringUTFChars(env, input, input_str);
-  if (!hash1_result) {
+  if (!input_hash_result) {
     return (*env)->NewStringUTF(env, "");
   }
 
-  // Generate a second hash based off of our internal secret, the row identifier
+  // Generate a second hash based off of our session key, the row identifier
   // and the token identifier.  If something went wrong we need to stop processing.
   unsigned char supplemental_hash[HASH_OUTPUT_BUFFER_LEN];
-  if (!generate_supplemental_hash(env, rowId, tokenId, supplemental_hash)) {
+  if (!generate_supplemental_hash(env, sessionKey, rowId, tokenId, supplemental_hash)) {
     return (*env)->NewStringUTF(env, "");
   }
 
   unsigned char final_hash[HASH_OUTPUT_BUFFER_LEN];
   for (int index = 0; index < HASH_OUTPUT_BUFFER_LEN; index++) {
-    final_hash[index] = hash1[index] ^ supplemental_hash[index];
+    final_hash[index] = input_hash[index] ^ supplemental_hash[index];
   }
 
   char output[HASH_STRING_OUTPUT_BUFFER_LEN + 1];
   bytes_to_hex_string(final_hash, HASH_OUTPUT_BUFFER_LEN, output, HASH_STRING_OUTPUT_BUFFER_LEN);
   return (*env)->NewStringUTF(env, output);
 }
+#endif
 
 JNIEXPORT jstring JNICALL Java_org_linkja_crypto_Library_revertSecureHash
-  (JNIEnv *env, jclass obj, jstring input, jstring rowId, jstring tokenId)
+  (JNIEnv *env, jclass obj, jstring input, jstring sessionKey, jstring rowId, jstring tokenId)
 {
   (void)obj;  // Avoid warning about unused parameters.
 
-  // Generate the supplemental hash based off of our internal secret, the row identifier
+  // Generate the supplemental hash based off of our session key, the row identifier
   // and the token identifier.  If something went wrong we need to stop processing.
   unsigned char supplemental_hash[HASH_OUTPUT_BUFFER_LEN];
-  if (!generate_supplemental_hash(env, rowId, tokenId, supplemental_hash)) {
+  if (!generate_supplemental_hash(env, sessionKey, rowId, tokenId, supplemental_hash)) {
     return (*env)->NewStringUTF(env, "");
   }
 
@@ -719,9 +800,15 @@ JNIEXPORT jstring JNICALL Java_org_linkja_crypto_Library_revertSecureHash
   // The output array size is half the hex_str length (rounded up)
   int input_hash_len = (input_len+1)/2;
   unsigned char* input_hash = malloc(input_hash_len);
+  if (!input_hash) {
+    free(input_hash);
+    return (*env)->NewStringUTF(env, "");
+  }
+
   bool result = hex_string_to_bytes(input_str, (int)input_len, input_hash, input_hash_len);
   (*env)->ReleaseStringUTFChars(env, input, input_str);
   if (!result) {
+    free(input_hash);
     return (*env)->NewStringUTF(env, "");
   }
 
@@ -729,12 +816,12 @@ JNIEXPORT jstring JNICALL Java_org_linkja_crypto_Library_revertSecureHash
   for (int index = 0; index < HASH_OUTPUT_BUFFER_LEN; index++) {
     original_hash[index] = input_hash[index] ^ supplemental_hash[index];
   }
+  free(input_hash);
 
   char output[HASH_STRING_OUTPUT_BUFFER_LEN + 1];
   bytes_to_hex_string(original_hash, HASH_OUTPUT_BUFFER_LEN, output, HASH_STRING_OUTPUT_BUFFER_LEN);
   return (*env)->NewStringUTF(env, output);
 }
-#endif
 
 jobject aesEncryptDecrypt
   (JNIEnv *env, jbyteArray data, jbyteArray aad, jbyteArray key, jbyteArray iv, jbyteArray tag, bool encrypt)
