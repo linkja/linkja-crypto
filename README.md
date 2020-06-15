@@ -3,7 +3,7 @@ C library to handle cryptographic functions.  Because this is intended to be use
 linkja programs (which are written in Java), this includes the Java Native Interface (JNI)
 headers with the C code.
 
-**WORK IN PROGRESS** - This is under active development
+
 
 ## Dependencies
 
