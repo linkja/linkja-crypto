@@ -19,11 +19,18 @@ else()
 
   # Use openssl to generate random hex digits and use those to populate the secret
   # value in the header file
-  execute_process(COMMAND openssl rand -hex ${SECRET_LEN} OUTPUT_VARIABLE RANDOM_VALUE)
+  if(APPLE)
+    set(rand_cmd openssl rand -hex ${SECRET_LEN})
+    set(digest_cmd openssl dgst -sha256 tmp/openssl.tmp)
+  elseif(WIN32)
+    set(rand_cmd cmd /c openssl rand -hex ${SECRET_LEN})
+    set(digest_cmd cmd /c openssl dgst -sha256 tmp/openssl.tmp)
+  endif()
+  execute_process(COMMAND ${rand_cmd} OUTPUT_VARIABLE RANDOM_VALUE)
   file(WRITE ../tmp/openssl.tmp "${RANDOM_VALUE}")
   # Note that the process executes in the context of the top-level directory, so we
   # access the file under tmp/ instead of ../tmp/
-  execute_process(COMMAND openssl dgst -sha256 tmp/openssl.tmp OUTPUT_VARIABLE RANDOM_VALUE_HASH)
+  execute_process(COMMAND ${digest_cmd} OUTPUT_VARIABLE RANDOM_VALUE_HASH)
   string(REGEX REPLACE "SHA256.*= " "" RANDOM_VALUE_HASH "${RANDOM_VALUE_HASH}")
   string(REGEX REPLACE "\n$" "" RANDOM_VALUE_HASH "${RANDOM_VALUE_HASH}")
   file(REMOVE ../tmp/openssl.tmp)
